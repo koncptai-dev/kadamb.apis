@@ -5,7 +5,8 @@ const path = require('path');
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     //cb(null, 'uploadimagesmap'); // Store images in 'uploads/properties/' folder
-    cb(null, path.join(__dirname, 'uploadimagesmap'));
+    const uploadPath = path.join(__dirname, '../uploadimagesmap'); // 👈 go up one level
+    cb(null, uploadPath);
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
