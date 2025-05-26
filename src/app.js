@@ -30,6 +30,8 @@ const walletfund = require('./routes/WalletFundRoute');
 app.use(cors());
 app.use(bodyParser.json());
 
+app.use('/uploadimagesmap', express.static('uploadimagesmap'));
+
 app.use('/uploads', express.static('uploads'));
 app.use('/api/agent', agent);
 app.use('/api', uploadRoutes);

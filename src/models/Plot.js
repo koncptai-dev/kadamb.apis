@@ -51,6 +51,10 @@ const Plot = sequelize.define("Plot", {
     type: DataTypes.FLOAT,
     allowNull: true,
   },
+   imageUrl: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
 
 module.exports = Plot;
