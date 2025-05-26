@@ -52,4 +52,9 @@ sequelize.sync({ alter: true }) // ✅ This ensures new models are created
   .then(() => console.log('✅ Database Synced'))
   .catch((err) => console.log('❌ Sync Error:', err));
 
+const uploadPath = path.join(__dirname, 'uploadimagesmap');
+
+if (!fs.existsSync(uploadPath)) {
+  fs.mkdirSync(uploadPath);
+}
 module.exports = app;
