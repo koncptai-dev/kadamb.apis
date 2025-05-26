@@ -57,4 +57,6 @@ const uploadPath = path.join(__dirname, 'uploadimagesmap');
 if (!fs.existsSync(uploadPath)) {
   fs.mkdirSync(uploadPath);
 }
+app.use('/uploadimagesmap', express.static(path.join(__dirname, 'uploadimagesmap')));
+
 module.exports = app;
