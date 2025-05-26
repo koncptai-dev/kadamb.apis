@@ -9,8 +9,13 @@ exports.addPlot = async (req, res) => {
   try {
     const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
 
+     
+     console.log("Received data:", req.body);
+    console.log("Received file:", req.file);
+    console.log("Received filename:", req.file.filename);
+
      const image = `/uploadimagesmap/${req.file.filename}`;
-    
+    console.log("Received image:", image);
     //  EMI calculation
     let emiAmount = null;
 
