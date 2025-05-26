@@ -63,7 +63,7 @@ exports.loginAgent = async (req, res) => {
 
     const agent = await Agent.findOne({ where: { associateCode } });
     if (!agent) {
-      return res.status(404).json({ message: 'Agent not founds' });
+      return res.status(404).json({ message: 'Agent not found' });
     }
 
     const isMatch = await bcrypt.compare(password, agent.password);
