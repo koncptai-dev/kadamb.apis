@@ -29,10 +29,13 @@ const cmdRewardRoutes = require("./routes/cmdRewardRoutes");
 const walletfund = require('./routes/WalletFundRoute'); 
 app.use(cors());
 app.use(bodyParser.json());
+const path = require('path');
 
-app.use('/uploadimagesmap', express.static('uploadimagesmap'));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.use('/uploads', express.static('uploads'));
+// app.use('/uploadimagesmap', express.static('uploadimagesmap'));
+
+// app.use('/uploads', express.static('uploads'));
 app.use('/api/agent', agent);
 app.use('/api', uploadRoutes);
 app.use("/api/targets", targetRoutes);

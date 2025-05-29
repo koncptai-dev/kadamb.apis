@@ -9,7 +9,7 @@ exports.addPlot = async (req, res) => {
   try {
     const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
 
-     const image = `/uploadimagesmap/${req.file.filename}`;
+     const image = `uploads/uploadimagesmap/${req.file.filename}`;
     
     //  EMI calculation
     let emiAmount = null;
