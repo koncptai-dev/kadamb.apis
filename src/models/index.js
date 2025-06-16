@@ -7,7 +7,8 @@ const AgentCommission = require("./AgentCommission");
 const AgentCommissionTracker = require("./AgentCommissionTracker");
 const Target = require("./Target");
 const CommissionLevel = require("./CommissionLevel");
-
+const Wallet = require("./WalletFundTransfer");
+const AllocationRequest = require("./AllocationRequest");
 
 // Define associations after initializing both models
 Allocation.hasMany(EMIPayment, { foreignKey: "allocationId", as: "payments" });
@@ -25,6 +26,12 @@ Agent.hasMany(AgentCommissionTracker, { foreignKey: "agentId", as: "commissionHi
 AgentCommissionTracker.belongsTo(Allocation, { foreignKey: "allocationId", as: "allocation" });
 Allocation.hasMany(AgentCommissionTracker, { foreignKey: "allocationId", as: "commissionRecords" });
 
+Wallet.belongsTo(Agent, { foreignKey: 'agentId', as: 'agent' });
+Agent.hasMany(Wallet, { foreignKey: 'agentId', as: 'walletTransfers' });
+
+  
+Agent.hasMany(AllocationRequest, { foreignKey: "agentId" });
+AllocationRequest.belongsTo(Agent, { foreignKey: "agentId", as: "agent" });
 
 module.exports = {
     sequelize,
@@ -34,7 +41,8 @@ module.exports = {
     AgentCommission,
     AgentCommissionTracker,
     Target,
-    CommissionLevel
-
+    CommissionLevel,
+    Wallet,
+    AllocationRequest
   };
   

@@ -124,8 +124,13 @@ const Agent = require("./Agent");  // Import the Agent model
       allowNull: false,
       defaultValue: 'pending',
     }
+  },
+
+  {
+    timestamps: true,
+    tableName: "allocation_requests", 
   });
 
-  Agent.hasMany(AllocationRequest, { foreignKey: "agentId" });
-AllocationRequest.belongsTo(Agent, { foreignKey: "agentId", as: "agent" });
+
+
   module.exports = AllocationRequest;

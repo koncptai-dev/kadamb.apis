@@ -25,7 +25,8 @@ const AgentUpload = sequelize.define('AgentUpload', {
         allowNull: false
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    tableName: 'agent_uploads',
 });
 
 // Run this **only once**, then comment it out after the table is created
