@@ -59,10 +59,8 @@ const Target = sequelize.define('Target', {
 
 }, {
   timestamps: true,
-<<<<<<< HEAD
   tableName: 'targets',
-=======
->>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
+
 });
 
 module.exports = Target;

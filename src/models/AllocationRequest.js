@@ -128,7 +128,7 @@ const Agent = require("./Agent");  // Import the Agent model
 
   {
     timestamps: true,
-    tableName: "allocation_requests", 
+    tableName: "allocationrequests", 
   });
 
 
