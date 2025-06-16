@@ -4,6 +4,8 @@ const Agent = require('../models/Agent');
 
 require('dotenv').config();
 
+
+
 //create wallet fund
 
 // transferWallet
@@ -93,13 +95,18 @@ exports.getBalance= async (req, res) => {
 // get all wallet fund
 exports.getWalletFund=async(req,res)=>{
   try{
-    const wallets=await walletTransfer.findAll({
-      order:[['createdAt','DESC']],
-    })
+
+    const{ agentId } = req.params;
+        
+    const wallets=await walletTransfer.findAll(
+      { where: { agentId } }
+    )
+
     if(!wallets){
       return res.status(404).json({message:'No Wallet Fund Found'});
     }
     res.status(200).json(wallets);
+   
   }catch(error){
     console.error('Error fetching wallet fund:', error);
     return res.status(500).json({ message: 'Failed to fetch wallet fund', error });
@@ -138,7 +145,6 @@ exports.getPendingWalletRequests = async (req, res) => {
   try {
     const requests = await walletTransfer.findAll({
       where: { status: 'Pending' },
-      include: [{ model: Agent }] // optional: include agent info
     });
 
     res.status(200).json(requests);

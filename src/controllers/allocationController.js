@@ -1,49 +1,45 @@
 const Allocation = require('../models/allocation');
 const EMIPayment = require('../models/emipayment');
+const AllocationRequest=require('../models/AllocationRequest');
 const Agent = require('../models/Agent');
 const moment = require('moment'); // install if not already: npm install moment
 
-
-// Allocate a plot to a customer
+// AllocationRequest a plot to a customer
 exports.allocatePlot = async (req, res) => {
-    try {
-        const {
-            amount,
-            downPayment ,
-            emiDuration,
-            emiStartDate
-        } = req.body;
+  try {
+    const { customerPAN, amount, downPayment, emiDuration, emiStartDate } = req.body;
 
-        let emiMonthly = 0;
-        let emiEndDate = emiStartDate;
-
-        // Calculate EMI monthly and end date (no interest)
-        if (emiDuration && amount && amount > 0) {
-            const principal = amount - downPayment;
-
-            emiMonthly = principal / emiDuration;
-            emiMonthly = parseFloat(emiMonthly.toFixed(2)); // 2 decimal places
-
-            emiEndDate = moment(emiStartDate).add(emiDuration, 'months').format('YYYY-MM-DD');
-        }
-
-        // Create allocation with computed values
-        const allocation = await Allocation.create({
-            ...req.body,
-            emiMonthly,
-            emiEndDate
-        });
-
-        return res.status(201).json({
-            message: "Plot allocated successfully",
-            allocation
-        });
-    } catch (error) {
-        console.error("Error allocating plot:", error);
-        return res.status(500).json({ error: "Internal server error" });
+    if (!customerPAN || customerPAN.trim() === "") {
+      return res.status(400).json({ error: "Customer PAN is required." });
     }
-};
 
+    // Proceed with EMI calculations
+    let emiMonthly = 0;
+    let emiEndDate = emiStartDate;
+
+    if (emiDuration && amount && amount > 0) {
+      const principal = amount - downPayment;
+      emiMonthly = parseFloat((principal / emiDuration).toFixed(2));
+      emiEndDate = moment(emiStartDate).add(emiDuration, "months").format("YYYY-MM-DD");
+    }
+
+    const allocation = await AllocationRequest.create({
+      ...req.body,
+      emiMonthly,
+      emiEndDate,
+      status: "pending",
+    });
+
+    return res.status(201).json({
+      message: "Plot allocation request submitted for admin approval",
+      allocation,
+    });
+  } catch (error) {
+    console.error("Error Submitting Request:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+
+}
 
 // Get all allocated plots
 exports.getAllAllocations = async (req, res) => {
@@ -106,7 +102,7 @@ exports.updateAllocation = async (req, res) => {
             emiStartDate
         } = req.body;
 
-        const allocation = await Allocation.findByPk(id);
+        const allocation = await AllocationRequest.findByPk(id);
 
         if (!allocation) {
             return res.status(404).json({ error: "Allocation not found" });
@@ -157,3 +153,4 @@ exports.deleteAllocation = async (req, res) => {
         return res.status(500).json({ error: "Internal server error" });
     }
 };
+

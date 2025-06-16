@@ -60,6 +60,14 @@ app.use("/api/adminapprove", adminapproveRoute); // Use Admin Approve Routes
 app.use("/api", associateBusinessRoute); 
 app.use("/api/circular-rank", CircularRoutes); 
 
+
+app.use(cors({
+    origin: 'https://kadamprojects.com/', // Allow only your frontend's IP
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true // if you're using cookies/sessions
+}));
+
+
 sequelize.sync({ alter: true }) // ✅ This ensures new models are created
   .then(() => console.log('✅ Database Synced'))
   .catch((err) => console.log('❌ Sync Error:', err));

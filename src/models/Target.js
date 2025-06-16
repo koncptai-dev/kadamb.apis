@@ -59,6 +59,8 @@ const Target = sequelize.define('Target', {
 
 }, {
   timestamps: true,
+  tableName: 'targets',
+
 });
 
 module.exports = Target;

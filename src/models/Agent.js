@@ -98,6 +98,8 @@ identityProofUrl: {
 
 }, {
   timestamps: true,
+  tableName: 'agents', 
 });
 
-module.exports = Agent; // ✅ Correct Export
+module.exports = Agent; 
+

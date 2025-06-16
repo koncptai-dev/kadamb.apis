@@ -55,6 +55,9 @@ const Plot = sequelize.define("Plot", {
     type: DataTypes.STRING,
     allowNull: true,
   },
+}, {
+  timestamps: false, // Disable createdAt and updatedAt fields
+  tableName: 'plots',
 });
 
 module.exports = Plot;

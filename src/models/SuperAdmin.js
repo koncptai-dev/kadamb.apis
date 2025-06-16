@@ -28,6 +28,8 @@ const SuperAdmin = sequelize.define(
         superAdmin.password = await bcrypt.hash(superAdmin.password, salt);
       },
     },
+    tableName: "superadmins", 
+
   }
 );
 

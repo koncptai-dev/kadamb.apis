@@ -25,14 +25,10 @@ const AgentUpload = sequelize.define('AgentUpload', {
         allowNull: false
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    tableName: 'agentuploads',
 });
 
-// Run this **only once**, then comment it out after the table is created
-// sequelize.sync({ alter: true }) // Use { force: true } ONLY if you want to reset tables
-//   .then(() => {
-//       console.log('AgentUpload table created successfully');
-//   })
-//   .catch(err => console.error('Database sync error:', err));
+
 
 module.exports = AgentUpload;
