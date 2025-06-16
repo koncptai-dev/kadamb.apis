@@ -18,10 +18,7 @@ const CommissionLevel = sequelize.define('CommissionLevel', {
   },
 }, {
   timestamps: false,
-<<<<<<< HEAD
   tableName: 'commission_levels'
-=======
->>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
 });
 
 module.exports = CommissionLevel;

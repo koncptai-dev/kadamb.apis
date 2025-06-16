@@ -55,13 +55,9 @@ const Plot = sequelize.define("Plot", {
     type: DataTypes.STRING,
     allowNull: true,
   },
-<<<<<<< HEAD
-},
-{
-  timestamps: false,
+}, {
   tableName: 'plots',
-=======
->>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
+  
 });
 
 module.exports = Plot;
