@@ -17,11 +17,16 @@ const Agent = sequelize.define('Agent', {
   },
   commissionLevelId: {
     type: DataTypes.INTEGER,
-    defaultValue: 1, // Top-level agents start at Level 1
     references: {
       model: 'CommissionLevels', // Links to commission table
       key: 'id',
     },
+    allowNull: false
+    
+  },
+  commissionPercentage: {
+    type: DataTypes.FLOAT,
+    allowNull: true, // This will store the commissionPercentage from CommissionLevels
   },
   associateCode: {
     type: DataTypes.STRING,
@@ -30,7 +35,6 @@ const Agent = sequelize.define('Agent', {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true,
     validate: { isEmail: true },
   },
   mobileNo: {
@@ -75,6 +79,23 @@ const Agent = sequelize.define('Agent', {
     defaultValue: "pending",
   },
   resetCode: DataTypes.STRING, // Used for forgot password functionality
+  photoUrl: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+signatureUrl: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+addressProofUrl: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+identityProofUrl: {
+  type: DataTypes.STRING,
+  allowNull: true,
+},
+
 }, {
   timestamps: true,
 });

@@ -1,102 +1,62 @@
-const { Agent, AgentCommission, AgentCommissionTracker, Target, CommissionLevel } = require("../models");
+// controllers/AgentRewardController.js
 const { Op } = require("sequelize");
+const CircularRank = require("../models/CircularRank");
+const AgentCommission = require("../models/AgentCommission");
+const Agent = require("../models/Agent");
 
 exports.getSubAgentRewards = async (req, res) => {
-    try {
-        const parentAgentId = req.user.id; // Parent agent ID from JWT auth
-        const { startDate, endDate } = req.query; // Get date range from request query
+  const agentId = req.user.id; 
+  try {
+    const circulars = await CircularRank.findAll();
 
-        // Validate date input
-        if (!startDate || !endDate) {
-            return res.status(400).json({ success: false, message: "Start date and end date are required" });
-        }
+    const results = [];
 
-        // Get all sub-agents under this agent
-        const subAgents = await Agent.findAll({ where: { parentId: parentAgentId } });
+    for (const circular of circulars) {
+      const { id, name, rank_level, target_amount, reward_amount} = circular;
 
-        let subAgentRewards = [];
+      // Self Income
+      const selfIncome = await AgentCommission.sum('commissionAmount', { where: { agentId } });
+        
+      const downlineAgents = await Agent.findAll({ where: { parentId: agentId } });       
+      const downlineIds = downlineAgents.map(agent => agent.id);
+      console.log(downlineIds);
+      
+      let teamIncome = 0;
+      if (downlineIds.length > 0) {
+         teamIncome = await AgentCommission.sum('commissionAmount', {
+            where: { agentId: { [Op.in]: downlineIds } }
+        });
+      }
 
-        for (let agent of subAgents) {
-            const agentId = agent.id;
+      const totalIncome = (selfIncome || 0) + (teamIncome || 0);
+      // console.log(totalIncome);
+      
+      const status = totalIncome >= target_amount ? "Achieved" : "Pending";
+      // console.log(status);
+      
+      const remainingTeamIncome = target_amount - totalIncome > 0 ? target_amount - totalIncome : 0;
+      // console.log(remainingTeamIncome);
+      
+// console.log(`Circular: ${name}, Rank: ${rank_level}`);
+// console.log(`SelfIncome for agent ${agentId}: ${selfIncome}`);
+// console.log(`TeamIncome for agent ${agentId}: ${teamIncome}`);
 
-            // Get agent's commission level
-            const commissionLevel = await CommissionLevel.findOne({ 
-                where: { id: agent.commissionLevelId }, 
-                attributes: ['level'] 
-            });
-
-            // Fetch target details for the agent within the date range
-            const targetRecord = await Target.findOne({ 
-                where: { 
-                    agentId, 
-                    startDate: { [Op.gte]: startDate }, 
-                    endDate: { [Op.lte]: endDate }
-                }
-            });
-
-            // Determine achievement status
-            let achievementStatus = "Not Achieved";
-            if (targetRecord) {
-                const totalCommissionEarned = await AgentCommissionTracker.sum("commissionAmount", {
-                    where: {
-                        agentId,
-                        timestamp: { [Op.gte]: startDate, [Op.lte]: endDate }
-                    }
-                });
-
-                if (totalCommissionEarned >= targetRecord.targetAmount) {
-                    achievementStatus = "Achieved";
-                }
-            }
-
-            // Get reward amount (sub-agent commissions within the date range)
-            const rewardAmount = await AgentCommissionTracker.sum("commissionAmount", {
-                where: { 
-                    agentId: { [Op.ne]: parentAgentId }, // All sub-agents except parent
-                    timestamp: { [Op.gte]: startDate, [Op.lte]: endDate }
-                }
-            });
-
-            // Get self income (commissions earned by this agent within date range)
-            const selfIncome = await AgentCommission.sum("commissionAmount", { 
-                where: { 
-                    agentId, 
-                    timestamp: { [Op.gte]: startDate, [Op.lte]: endDate } 
-                }
-            });
-
-            // Calculate team income (self income + reward amount)
-            const teamIncome = (selfIncome || 0) + (rewardAmount || 0);
-
-            // Calculate remaining team income (total sub-agent targets - team income)
-            const totalTarget = await Target.sum("targetAmount", { 
-                where: { 
-                    agentId, 
-                    startDate: { [Op.gte]: startDate }, 
-                    endDate: { [Op.lte]: endDate }
-                } 
-            });
-            const remainingTeamIncome = (totalTarget || 0) - teamIncome;
-
-            // Add agent details
-            subAgentRewards.push({
-                agentId,
-                agentName: agent.fullName,
-                level: commissionLevel?.level || "N/A",
-                status: targetRecord ? "Active" : "Inactive",
-                achievementStatus,
-                totalTarget: targetRecord?.targetAmount || 0,
-                rewardAmount: rewardAmount || 0,
-                selfIncome: selfIncome || 0,
-                teamIncome: teamIncome || 0,
-                remainingTeamIncome: remainingTeamIncome || 0
-            });
-        }
-
-        res.status(200).json({ success: true, data: subAgentRewards });
-
-    } catch (error) {
-        console.error("Error fetching sub-agent rewards:", error);
-        res.status(500).json({ success: false, message: "Internal Server Error" });
+      results.push({
+        id,
+        name,
+        rankLevel: rank_level,
+        target: target_amount,
+        rewardAmount: reward_amount,
+        status,
+        selfIncome: selfIncome || 0,
+        teamIncome: teamIncome || 0,
+        remainingTeamIncome
+      });
     }
-};
+
+    res.json(results);
+  } catch (err) {
+    console.error("Error in agent reward status:", err);
+    res.status(500).json({ message: "Internal error", error: err.message });
+  }
+}; 

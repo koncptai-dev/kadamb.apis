@@ -30,14 +30,30 @@ exports.uploadAgentDocument = async (req, res) => {
             return res.status(404).json({ message: 'Agent not found' });
         }
 
+        const filePath = `/uploads/properties/${req.file.filename}`;
+
         // **Save file information in Upload table**
         const newUpload = await Upload.create({
             agentId: agentId,
             fieldType: fieldType,
-            filePath: `/uploads/properties/${req.file.filename}`
+            filePath
         });
 
         console.log('File saved:', newUpload);
+        
+        //agent filed 
+             const fieldMap = {
+            photo: 'photoUrl',
+            signature: 'signatureUrl',
+            addressProof: 'addressProofUrl',
+            identityProof: 'identityProofUrl',
+        };
+
+        const agentField = fieldMap[fieldType];
+        if (agentField) {
+            await agent.update({ [agentField]: filePath });
+        }
+
 
         res.status(201).json({
             message: `${fieldType} uploaded successfully`,
@@ -50,7 +66,6 @@ exports.uploadAgentDocument = async (req, res) => {
         res.status(500).json({ message: 'Internal server error' });
     }
 };
-
 
 
 // ✅ **Get all uploaded documents for an agent**
@@ -92,7 +107,7 @@ exports.editAgentDocument = async (req, res) => {
         }
 
         // Update with new file path
-        document.filePath = `/uploads/properties/${req.file.filename}`;
+        document.filePath = `/properties/${req.file.filename}`;
         await document.save();
 
         res.status(200).json({ message: 'Document updated successfully', updatedDocument: document });

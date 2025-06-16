@@ -14,6 +14,7 @@ router.get('/all-agents', agentController.getAllAgents);
 
 router.get('/:id/sub-agents',agentController.getAgentwithSubAgent);
 router.get('/all-sub-agents', agentController.getAllSubAgents);
+router.delete('/delete/:id', agentController.deleteAgent);
 
 
 module.exports = router;

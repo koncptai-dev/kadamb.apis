@@ -70,7 +70,7 @@ const Allocation = sequelize.define("Allocation", {
   },
   plotNumber: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   amount: {
     type: DataTypes.FLOAT,
@@ -123,6 +123,12 @@ const Allocation = sequelize.define("Allocation", {
     allowNull: false,
     defaultValue: 0,
   },
+  bookingNumber: {
+  type: DataTypes.STRING,
+  allowNull: true,
+  unique: true,
+},
+
 });
 
 module.exports = Allocation;

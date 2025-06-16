@@ -23,11 +23,8 @@ exports.getDueInstallments = async (req, res) => {
     
     try {
         const agentId = req.user.id; // Extract agentId from token
-        
         const { filterType } = req.query; // 'directSponsor' or 'team'
-
         const today = new Date();
-
         let agentIdsToCheck = [];
 
         if (filterType === "directSponsor") {

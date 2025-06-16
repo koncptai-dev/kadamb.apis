@@ -8,46 +8,65 @@ const Allocation = require("../models/allocation");  // Ensure Allocation model 
 const authenticate = require('../middlewares/auth');
 
 // Recursive function to get downline agents
-const getDownlineAgents = async (agentId) => {
+const getDownlineAgents = async (agentId, visited = new Set()) => {
+    if (visited.has(agentId)) return [];
+
+    visited.add(agentId);
+
     let downline = await Agent.findAll({ where: { parentId: agentId } });
     let allAgents = [...downline];
 
     for (let agent of downline) {
-        let subAgents = await getDownlineAgents(agent.id);
+        let subAgents = await getDownlineAgents(agent.id, visited);
         allAgents = [...allAgents, ...subAgents];
     }
+
     return allAgents;
 };
 
+
+
 // Recursive function to get uplines (parents)
-const getUplineAgents = async (agentId) => {
+const getUplineAgents = async (agentId, visited = new Set()) => {
     let uplines = [];
     let currentAgent = await Agent.findOne({ where: { id: agentId } });
 
-    while (currentAgent && currentAgent.parentId) {
+    while (currentAgent && currentAgent.parentId && !visited.has(currentAgent.parentId)) {
+        visited.add(currentAgent.parentId);
         let parentAgent = await Agent.findOne({ where: { id: currentAgent.parentId } });
         if (!parentAgent) break;
         uplines.push(parentAgent);
         currentAgent = parentAgent;
     }
+
     return uplines;
 };
+
 
 // API to fetch business commission with full hierarchy
 router.get('/BusinessCommission', authenticate, async (req, res) => {
     try {
         const { startDate, endDate, downlineType } = req.query;
         const loggedInAgentId = req.user.id;
-
+        console.log("loggedInAgentId", loggedInAgentId);
+        
         let agentIds = [loggedInAgentId];
 
         if (downlineType === 'downline') {
-            let downlineAgents = await getDownlineAgents(loggedInAgentId);
+            let downlineAgents = await getDownlineAgents(loggedInAgentId);            
             let uplines = await getUplineAgents(loggedInAgentId);
             agentIds = [...agentIds, ...downlineAgents.map(a => a.id), ...uplines.map(a => a.id)];
-        } else if (downlineType === 'direct') {
+            //  let downlineAgents = await getDownlineAgents(loggedInAgentId);
+            //  console.log(downlineAgents);
+             
+            // agentIds = [loggedInAgentId, ...downlineAgents.map(a => a.id)];
+        } 
+        else if (downlineType === 'direct') {
             let directAgents = await Agent.findAll({ where: { parentId: loggedInAgentId } });
             agentIds = [...agentIds, ...directAgents.map(a => a.id)];
+        }
+        else{
+            agentIds=[loggedInAgentId]
         }
 
         // Build WHERE condition dynamically
@@ -98,3 +117,5 @@ router.get('/BusinessCommission', authenticate, async (req, res) => {
 });
 
 module.exports = router;
+
+

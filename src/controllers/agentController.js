@@ -2,42 +2,114 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const Agent = require('../models/Agent');
+const commissionLevel = require('../models/CommissionLevel'); 
 require('dotenv').config();
-const { sendResetEmail } = require('../utils/emailService'); // Utility for sending emails
+const { sendResetEmail, sendCredentialsEmail } = require('../utils/emailService'); // Utility for sending emails
 
 // Generate Random Associate Code
-const generateAssociateCode = () => `AGENT${Date.now()}`;
+// const generateAssociateCode = () => `AGENT${Date.now()}`;
+
+const generateAssociateCode = async () => {
+  const lastAgent = await Agent.findOne({
+    order: [['id', 'DESC']]
+  });
+
+  const nextId = lastAgent ? lastAgent.id + 1 : 1;
+  return `AGENT${String(nextId).padStart(4, '0')}`; 
+};
 
 // Register Agent
+// exports.registerAgent = async (req, res) => {
+//   try {
+//     const { fullName, mobileNo, password, email, parentId,commissionLevelId,   ...otherDetails } = req.body;
+    
+//     // Check if mobile number is already registered
+//     const existingAgent = await Agent.findOne({ where: { mobileNo } });
+//     if (existingAgent) {
+//       return res.status(400).json({ message: 'Mobile number already registered' });
+//     }
+
+//     // Check if email is already registered
+//     const existingAgentByEmail = await Agent.findOne({ where: { email } });
+//     if (existingAgentByEmail) {
+//       return res.status(400).json({ message: 'Email already registered' });
+//     }
+
+//     let validatedParentId = null;
+
+//     // If parentId is provided, verify that it exists
+//     if (parentId) {
+//       const parentAgent = await Agent.findByPk(parentId);
+//       if (!parentAgent) {
+//         return res.status(400).json({ message: 'Parent agent does not exist' });
+//       }
+//       validatedParentId = parentId; // Use only if valid
+//     }
+
+//     const hashedPassword = await bcrypt.hash(password, 10);
+//     const associateCode =await generateAssociateCode();
+
+//     const commissionLevelId=await commissionLevel.findByPk(commissionLevelId);
+//     if(!commissionLevelId){
+//       return res.status(400).json({ message: 'Invalid commission level ID' });
+//     }
+//     const commissionPercentage = commissionLevelId.commissionPercentage;
+//     // Create new agent
+//     const newAgent = await Agent.create({
+//       associateCode,
+//       fullName,
+//       mobileNo,
+//       email,
+//       password: hashedPassword,
+//       parentId: validatedParentId, // Ensuring it's either a valid ID or NULL
+//       commissionPercentage,
+//       ...otherDetails,
+//     });
+
+//     res.status(201).json({ message: 'Agent registered successfully', agent: newAgent });
+//   } catch (error) {
+//     res.status(500).json({ message: 'Error registering agent', error: error.message });
+//   }
+// };
+
 exports.registerAgent = async (req, res) => {
   try {
-    const { fullName, mobileNo, password, email, parentId, ...otherDetails } = req.body;
+    const { fullName, mobileNo, password, email, parentId, commissionLevelId, ...otherDetails } = req.body;
     
-    // Check if mobile number is already registered
+    // Validate commissionLevelId presence
+    if (!commissionLevelId) {
+      return res.status(400).json({ message: 'Commission level ID is required' });
+    }
+
+    // Check if commissionLevelId exists in DB
+    const commissionLevelRecord = await commissionLevel.findByPk(commissionLevelId);
+    if (!commissionLevelRecord) {
+      return res.status(400).json({ message: 'Invalid commission level ID' });
+    }
+    const commissionPercentage = commissionLevelRecord.commissionPercentage;
+
+    // Check mobile/email duplicate etc. (your existing code)
     const existingAgent = await Agent.findOne({ where: { mobileNo } });
     if (existingAgent) {
       return res.status(400).json({ message: 'Mobile number already registered' });
     }
 
-    // Check if email is already registered
     const existingAgentByEmail = await Agent.findOne({ where: { email } });
     if (existingAgentByEmail) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
     let validatedParentId = null;
-
-    // If parentId is provided, verify that it exists
     if (parentId) {
       const parentAgent = await Agent.findByPk(parentId);
       if (!parentAgent) {
         return res.status(400).json({ message: 'Parent agent does not exist' });
       }
-      validatedParentId = parentId; // Use only if valid
+      validatedParentId = parentId;
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const associateCode = generateAssociateCode();
+    const associateCode = await generateAssociateCode();
 
     // Create new agent
     const newAgent = await Agent.create({
@@ -46,15 +118,20 @@ exports.registerAgent = async (req, res) => {
       mobileNo,
       email,
       password: hashedPassword,
-      parentId: validatedParentId, // Ensuring it's either a valid ID or NULL
+      parentId: validatedParentId,
+      commissionPercentage,
+      commissionLevelId, // save commissionLevelId if you want
       ...otherDetails,
     });
 
-    res.status(201).json({ message: 'Agent registered successfully', agent: newAgent });
+    await sendCredentialsEmail(email, associateCode, password);
+
+    return res.status(201).json({ message: 'Agent registered successfully. Credentials sent to email.', agent: newAgent });
   } catch (error) {
-    res.status(500).json({ message: 'Error registering agent', error: error.message });
+    return res.status(500).json({ message: 'Error registering agent', error: error.message });
   }
 };
+
 
 // Login Agent
 exports.loginAgent = async (req, res) => {
@@ -91,6 +168,13 @@ exports.editAgent = async (req, res) => {
     const existingAgent = await Agent.findByPk(id);
     if (!existingAgent) {
       return res.status(404).json({ message: 'Agent not found' });
+    }
+      if (updates.commissionLevelId) {
+      const level = await commissionLevel.findByPk(updates.commissionLevelId);
+      if (!level) {
+        return res.status(400).json({ message: 'Invalid commission level ID' });
+      }
+      updates.commissionPercentage = level.commissionPercentage;
     }
 
     Object.keys(updates).forEach((key) => {
@@ -253,4 +337,17 @@ exports.getAllSubAgents = async (req, res) => {
     console.error('Error fetching sub-agents:', error);
     res.status(500).json({ message: 'Server error. Please try again later.' });
   }
+}
+
+exports.deleteAgent = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const agent = await Agent.findByPk(id);
+    if (!agent) return res.status(404).json({ message: 'Agent not found' });
+
+    await agent.destroy();
+    res.status(200).json({ message: 'Agent deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting agent ', error: error.message });
+  }
 }

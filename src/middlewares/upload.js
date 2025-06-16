@@ -1,10 +1,16 @@
 const multer = require('multer');
 const path = require('path');
+const fs=require('fs');
+
+const uploadDir = path.join(__dirname,'..','uploads', 'properties');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
 
 // Configure storage
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, 'src/uploads/properties/'); // Store images in 'uploads/properties/' folder
+    cb(null, uploadDir); // Store images in 'uploads/properties/' folder
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
