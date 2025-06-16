@@ -1,70 +1,73 @@
 const walletTransfer=require('../models/WalletFundTransfer');
 const AgentCommission = require('../models/AgentCommission');
+const Agent = require('../models/Agent');
+
 require('dotenv').config();
 
 //create wallet fund
+
+// transferWallet
 exports.transferWallet = async (req, res) => {
-  
   try {
     const { agentId, amount, requestFor, remarks, bankName, branchName, accountNumber } = req.body;
 
-    // Fetch the agent's commission from the AgentCommission table
-    const agentCommission = await AgentCommission.findOne({ where: { agentId } }); 
+    const agent = await Agent.findOne({ where: { id: agentId } });
+    if (!agent) {
+      return res.status(404).json({ message: 'Agent not found' });
+    }
 
+    const associateCode = agent.associateCode;
+    if (!associateCode) {
+      return res.status(400).json({ message: 'Associate code is missing for this agent' });
+    }
+
+    const agentCommission = await AgentCommission.findOne({ where: { agentId } });
     if (!agentCommission) {
       return res.status(404).json({ message: 'Agent not found in commission table' });
     }
-    const commissionAmount = agentCommission ? parseFloat(agentCommission.commissionAmount) : 0.0;
 
-    // Calculate the updated balance 
-    const updatedBalance =   commissionAmount - parseFloat(amount);
-    console.log(updatedBalance);
-console.log(amount);
+    const commissionAmount = parseFloat(agentCommission.commissionAmount || 0);
+    const requestedAmount = parseFloat(amount);
 
-    if (updatedBalance < 0) {
-      console.log('Insufficient balance. Transaction cannot proceed.');
+    if (requestedAmount > commissionAmount) {
       return res.status(400).json({
         message: 'Insufficient balance. Transaction cannot proceed.',
-        availableBalance: commissionAmount, // Informing the user about their actual balance
+        availableBalance: commissionAmount,
       });
-      
-    }
-    // Backend validation
-    if (requestFor === 'Bank Transfer' && (!bankName || !accountNumber || !branchName)) {
-      return res.status(400).json({ error: 'Bank Name and Account Number are required for Bank Transfer.' });
     }
 
-    // Create a wallet transaction
+    if (requestFor === 'Bank Transfer' && (!bankName || !accountNumber || !branchName)) {
+      return res.status(400).json({ error: 'Bank Name, Branch Name, and Account Number are required for Bank Transfer.' });
+    }
+
+    const transactionNumber = `TRN${Date.now()}${Math.floor(Math.random() * 1000)}`;
+
     const walletTransaction = await walletTransfer.create({
+      associateCode,
+      transactionNumber,
       agentId,
-      balance: parseInt(updatedBalance),
-      amount: parseFloat(amount),
+      balance: commissionAmount, // not updated yet
+      amount: requestedAmount,
       commission: commissionAmount,
       requestFor,
       remarks,
-      bankName:bankName || null,
-      branchName:branchName || null,  
-      accountNumber:accountNumber || null,
+      bankName: bankName || null,
+      branchName: branchName || null,
+      accountNumber: accountNumber || null,
+      requestDate: new Date(),
+      payDate: null,
+      status: 'Pending',
     });
 
-
-    //update comission amount in agent comission table
-    await AgentCommission.update(
-      { commissionAmount: updatedBalance }, 
-      { where: { agentId } }
-    );
-
-
-
     return res.status(201).json({
-      message: 'Wallet transaction created successfully',
+      message: 'Wallet transfer request submitted successfully. Awaiting admin approval.',
       data: walletTransaction,
     });
   } catch (error) {
     console.error('Error creating wallet transaction:', error);
     return res.status(500).json({ message: 'Failed to create wallet transaction', error });
   }
-}
+};
 
 exports.getBalance= async (req, res) => {
     try{
@@ -126,5 +129,94 @@ exports.editWalletFund = async (req, res) => {
     res.status(200).json({ message: 'Wallet transaction updated successfully', transaction: existingTransaction });
   } catch (error) {
     res.status(500).json({ message: 'Error updating wallet transaction', error: error.message });
+  }
+};
+
+
+//get pending wallet fund request 
+exports.getPendingWalletRequests = async (req, res) => {
+  try {
+    const requests = await walletTransfer.findAll({
+      where: { status: 'Pending' },
+      include: [{ model: Agent }] // optional: include agent info
+    });
+
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error('Error fetching requests:', error);
+    res.status(500).json({ message: 'Failed to fetch requests', error });
+  }
+};
+
+exports.updateWalletStatus = async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+
+  if (!['Approved'].includes(status)) {
+    return res.status(400).json({ message: 'Invalid status' });
+  }
+
+  try {
+    const request = await walletTransfer.findByPk(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    if (request.status === 'Approved') {
+      return res.status(400).json({ message: 'Request is already approved' });
+    }
+
+    // Deduct commission only on approval
+    if (status === 'Approved') {
+      const agentCommission = await AgentCommission.findOne({ where: { agentId: request.agentId } });
+      if (!agentCommission) {
+        return res.status(404).json({ message: 'Agent commission record not found' });
+      }
+
+      const currentCommission = parseFloat(agentCommission.commissionAmount || 0);
+      const deductionAmount = parseFloat(request.amount);
+
+      if (deductionAmount > currentCommission) {
+        return res.status(400).json({ message: 'Insufficient commission balance at approval time.' });
+      }
+
+      const newBalance = currentCommission - deductionAmount;
+
+      // Update commission balance
+      await AgentCommission.update(
+        { commissionAmount: newBalance },
+        { where: { agentId: request.agentId } }
+      );
+
+      // Update request status and pay date
+      await request.update({
+        status: 'Approved',
+        payDate: new Date(),
+        balance: newBalance, // store updated balance
+      });
+    }
+
+    res.status(200).json({ message: `Request ${status.toLowerCase()} successfully`, request });
+  } catch (error) {
+    console.error('Error updating status:', error);
+    res.status(500).json({ message: 'Failed to update status', error });
+  }
+};
+
+
+exports.deleteWalletRequest = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const request = await walletTransfer.findByPk(id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    await request.destroy();
+    res.status(200).json({ message: 'Request deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting request:', error);
+    res.status(500).json({ message: 'Failed to delete request', error });
   }
 };

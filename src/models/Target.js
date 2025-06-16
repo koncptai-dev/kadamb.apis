@@ -55,6 +55,8 @@ const Target = sequelize.define('Target', {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+
+
 }, {
   timestamps: true,
 });

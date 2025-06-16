@@ -72,51 +72,71 @@ exports.getAllPlots = async (req, res) => {
 };
 
 
-// exports.updatePlot = async (req, res) => {
-//   try {
-//     const { id } = req.params;
-//     const { projectName, plotSize, plotNumber, status, price } = req.body;
-
-//     const plot = await Plot.findByPk(id);
-//     if (!plot) {
-//       return res.status(404).json({ success: false, message: "Plot not found" });
-//     }
-
-//     await plot.update({ projectName, plotSize, plotNumber, status, price });
-//     res.status(200).json({ success: true, message: "Plot updated successfully", plot });
-//   } catch (error) {
-//     console.error("Error updating plot:", error);
-//     res.status(500).json({ success: false, message: "Error updating plot", error: error.message });
-//   }
-// };
-
-
-// Update a plot
 exports.updatePlot = async (req, res) => {
   try {
     const { id } = req.params;
-    const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude } = req.body;
+    const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null, latitude, longitude } = req.body;
 
-    const image = req.file.filename ? req.file.path : null;
     const plot = await Plot.findByPk(id);
     if (!plot) {
       return res.status(404).json({ success: false, message: "Plot not found" });
     }
-    //recalculate yard
-    if(plotSize || !isNaN(plotSize)){
-      yard= plotSize / 9;
+
+    // Validate coordinates
+    const isValidLatLng = (lat, lng) => {
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      return !isNaN(latNum) && !isNaN(lngNum) &&
+             latNum >= -90 && latNum <= 90 &&
+             lngNum >= -180 && lngNum <= 180;
+    };
+
+    if (!isValidLatLng(latitude, longitude)) {
+      return res.status(400).json({ success: false, message: "Invalid latitude or longitude" });
     }
 
-    //  EMI calculation
+    // Plot size parsing
+    const parsePlotSize = (input) => {
+      if (typeof input === 'number') return input;
+      if (typeof input !== 'string') return NaN;
+
+      const match = input.match(/^(\d+(?:\.\d+)?)\s*[xX\*]\s*(\d+(?:\.\d+)?)/);
+      if (!match) return NaN;
+
+      const width = parseFloat(match[1]);
+      const length = parseFloat(match[2]);
+      return width * length;
+    };
+
+    const parsedPlotSize = parsePlotSize(plotSize);
+    if (isNaN(parsedPlotSize)) {
+      return res.status(400).json({ success: false, message: "Invalid plot size format. Use 'Width x Length' or numeric value." });
+    }
+
+    const yard = parsedPlotSize / 9;
+
+    // EMI calculation
     let emiAmount = null;
+    if (emiDuration && price && downPayment != null) {
+      emiAmount = (price - downPayment) / emiDuration;
+    }
 
-      if (emiDuration && price && downPayment != null) {
-        emiAmount = (price - downPayment) / emiDuration;
+    // Image update
+    let image = plot.imageUrl;
+    if (req.file?.filename) {
+      const newImagePath = `uploads/uploadimagesmap/${req.file.filename}`;
+      if (plot.imageUrl && fs.existsSync(plot.imageUrl) && plot.imageUrl !== newImagePath) {
+        fs.unlink(plot.imageUrl, (err) => {
+          if (err) console.error("Failed to delete old image:", err);
+        });
       }
+      image = newImagePath;
+    }
 
+    // Perform update
     await plot.update({
       projectName,
-      plotSize,
+      plotSize: parsedPlotSize,
       yard,
       plotNumber,
       position,
@@ -125,9 +145,9 @@ exports.updatePlot = async (req, res) => {
       downPayment,
       emiDuration,
       emiAmount,
-      latitude,    // ✅ add
-      longitude, 
-      imageUrl:image
+      latitude,
+      longitude,
+      imageUrl: image
     });
 
     res.status(200).json({ success: true, message: "Plot updated successfully", plot });
@@ -135,8 +155,20 @@ exports.updatePlot = async (req, res) => {
     console.error("Error updating plot:", error);
     res.status(500).json({ success: false, message: "Error updating plot", error: error.message });
   }
-};
+}
 
+exports.deletePlot = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const plot = await Plot.findByPk(id);
+    if (!plot) return res.status(404).json({ message: 'plot not found' });
+
+    await plot.destroy();
+    res.status(200).json({ message: 'Plot deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting plot ', error: error.message });
+  }
+}
 
 
 exports.getPlotByNumber = async (req, res) => {
@@ -272,7 +304,6 @@ exports.updatePlot = async (req, res) => {
     res.status(500).json({ success: false, message: "Error updating plot", error: error.message });
   }
 };
-
 
 
 exports.getPlotByNumber = async (req, res) => {

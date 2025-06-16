@@ -27,6 +27,11 @@ const businessRoutes = require("./routes/businessRoutes");
 const installmentRoutes = require("./routes/installmentRoutes");
 const cmdRewardRoutes = require("./routes/cmdRewardRoutes"); 
 const walletfund = require('./routes/WalletFundRoute'); 
+const OfficeAgent = require('./routes/officeAgentRoutes'); // Import Office Agent Routes
+const adminapproveRoute = require('./routes/adminapproveRoute'); // Import Admin Approve Routes
+const associateBusinessRoute = require('./routes/associateBussinessRoute'); 
+const CircularRoutes = require('./routes/CircularRoutes'); 
+
 app.use(cors());
 app.use(bodyParser.json());
 const path = require('path');
@@ -37,6 +42,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // app.use('/uploads', express.static('uploads'));
 app.use('/api/agent', agent);
+app.use('/api/officeagent', OfficeAgent); // Use Office Agent Routes
 app.use('/api', uploadRoutes);
 app.use("/api/targets", targetRoutes);
 app.use("/api/superadmin", superAdminRoutes); 
@@ -50,6 +56,9 @@ app.use("/api/business", businessRoutes);
 app.use("/api/installment", installmentRoutes);
 app.use("/api", cmdRewardRoutes);
 app.use("/api/walletfund",walletfund);
+app.use("/api/adminapprove", adminapproveRoute); // Use Admin Approve Routes
+app.use("/api", associateBusinessRoute); 
+app.use("/api/circular-rank", CircularRoutes); 
 
 sequelize.sync({ alter: true }) // ✅ This ensures new models are created
   .then(() => console.log('✅ Database Synced'))

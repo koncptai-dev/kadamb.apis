@@ -6,6 +6,7 @@ const upload = require("../middlewares/uploadmiddleware");
 router.post("/add", upload.single('file'),plotController.addPlot);
 router.get("/all", plotController.getAllPlots);
 router.put("/update/:id",upload.single('file'), plotController.updatePlot);
+    router.delete("/delete/:id", plotController.deletePlot);
 
 router.get("/available/:projectName", plotController.getAvailablePlotsByProject);
 router.get("/sizes/:projectName", plotController.getAvailablePlotSizesByProject);

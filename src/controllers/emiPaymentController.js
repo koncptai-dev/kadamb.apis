@@ -20,7 +20,7 @@ const sequelize = require("../config/database");
 
     const allocation = await Allocation.findByPk(allocationId, { transaction });
     if (!allocation) {
-      await transaction.rollback();
+      await transaction.rollback();    
       return res.status(404).json({ error: "Allocation not found" });
     }
 
@@ -89,87 +89,100 @@ const sequelize = require("../config/database");
     console.log("EMI Payment created:", emiPayment);
 
     // Fetch commission levels in ascending order
-    const commissionLevels = await CommissionLevel.findAll({
-      order: [["level", "ASC"]],
-      transaction
-    });
+    // const commissionLevels = await CommissionLevel.findAll({
+    //   order: [["level", "ASC"]],
+    //   transaction
+    // });
 
-    if (!commissionLevels.length) {
-      await transaction.rollback();
-      return res.status(500).json({ error: "No commission levels found in database." });
-    }
+    // if (!commissionLevels.length) {
+    //   await transaction.rollback();
+    //   return res.status(500).json({ error: "No commission levels found in database." });
+    // }
 
     // Fetch the first agent linked to the allocation
-    let agent = await Agent.findByPk(allocation.agentId, { transaction });
-    if (!agent) {
-      await transaction.rollback();
-      return res.status(404).json({ error: "Agent not found for this property allocation." });
+ let agent = await Agent.findByPk(allocation.agentId, { transaction });
+
+console.log("➡️ allocation.agentId =", allocation.agentId);
+
+if (!agent) {
+  await transaction.rollback();
+  console.log("❌ Agent not found for this property allocation.");
+  return res.status(404).json({ error: "Agent not found for this property allocation." });
+}
+
+let agentHierarchy = [];
+const visitedAgentIds = new Set(); //for unique agent tracking
+// Get agent hierarchy (bottom to top)
+while (agent) {
+  if (visitedAgentIds.has(agent.id)) {
+    console.error(" Cycle detected in agent hierarchy! Agent ID:", agent.id);
+    break;
+  }
+  visitedAgentIds.add(agent.id);
+  agentHierarchy.unshift(agent);
+
+  if (!agent.parentId) break;
+  agent = await Agent.findByPk(agent.parentId, { transaction });
+}
+let previousCommissionPercentage = 0;
+
+
+for (let i = agentHierarchy.length - 1; i >= 0; i--) {
+  const currentAgent = agentHierarchy[i];
+  const commissionPercentage = currentAgent.commissionPercentage || 0;
+
+  let commissionAmount;
+
+  if (i === agentHierarchy.length - 1) {
+    commissionAmount = (emiAmountPaid * commissionPercentage) / 100;
+  } else {
+    const percentageDifference = commissionPercentage - previousCommissionPercentage;
+    commissionAmount = (emiAmountPaid * percentageDifference) / 100;
+  }
+
+  commissionAmount = Math.max(commissionAmount, 0);
+
+  if (commissionAmount > 0) {
+    try {
+      // AgentCommissionTracker entry
+      await AgentCommissionTracker.create({
+        agentId: currentAgent.id,
+        allocationId,
+        commissionAmount
+      }, { transaction });
+      console.log(` Commission Tracker entry created for Agent ID: ${currentAgent.id}`);
+    } catch (err) {
+      console.error(`Error creating AgentCommissionTracker for Agent ID: ${currentAgent.id}`, err);
     }
 
-    let agentHierarchy = [];
-    let level = 0;
+    try {
+      const existingCommission = await AgentCommission.findOne({
+        where: { agentId: currentAgent.id },
+        transaction
+      });
 
-    // Get agent hierarchy (starting from seller and moving up)
-    while (agent && level < commissionLevels.length) {
-      agentHierarchy.unshift(agent); // Puts parent agents first
-      if (!agent.parentId) break;
-      agent = await Agent.findByPk(agent.parentId, { transaction });
-      level++;
-    }
-
-    console.log("Agent hierarchy (bottom to top):", agentHierarchy.map(a => a.id));
-
-    let previousCommissionPercentage = 0;
-
-    // Loop bottom-up (from seller to higher levels)
-    for (let i = agentHierarchy.length - 1; i >= 0; i--) {
-      const agent = agentHierarchy[i];
-      const commissionPercentage = commissionLevels[i]?.commissionPercentage || 0;
-
-      let commissionAmount;
-      if (i === agentHierarchy.length - 1) {
-        // First agent (seller) gets full commission
-        commissionAmount = (emiAmountPaid * commissionPercentage) / 100;
+      if (existingCommission) {
+        await existingCommission.update({
+          commissionAmount: sequelize.literal(`commissionAmount + ${commissionAmount}`)
+        }, { transaction });
       } else {
-        // Higher levels get only the difference in percentage
-        const percentageDifference = commissionPercentage - previousCommissionPercentage;
-        commissionAmount = (emiAmountPaid * percentageDifference) / 100;
-      }
-
-      // Ensure commission is not negative
-      commissionAmount = Math.max(commissionAmount, 0);
-
-      console.log(`Agent ID: ${agent.id}, Level: ${i + 1}, Commission: ₹${commissionAmount}`);
-
-      if (commissionAmount > 0) {
-        await AgentCommissionTracker.create({
-          agentId: agent.id,
-          allocationId,
+        await AgentCommission.create({
+          agentId: currentAgent.id,
           commissionAmount
         }, { transaction });
-
-        const existingCommission = await AgentCommission.findOne({
-          where: { agentId: agent.id },
-          transaction
-        });
-
-        if (existingCommission) {
-          await existingCommission.update({
-            commissionAmount: sequelize.literal(`commissionAmount + ${commissionAmount}`)
-          }, { transaction });
-        } else {
-          await AgentCommission.create({
-            agentId: agent.id,
-            commissionAmount
-          }, { transaction });
-        }
       }
+    } catch (err) {
+      console.error(` Error creating/updating AgentCommission for Agent ID: ${currentAgent.id}`, err);
+    }
+  } else {
+    console.log(` Skipped agent ID: ${currentAgent.id} due to zero commission.`);
+  }
 
-      // Update previousCommissionPercentage for the next iteration
-      previousCommissionPercentage = commissionPercentage;
-    }   
+  previousCommissionPercentage = commissionPercentage;
+}
 
-    await transaction.commit();
+await transaction.commit();
+
     return res.status(201).json({
       message: "EMI Payment recorded successfully and commissions distributed.",
       emiPayment,
@@ -181,6 +194,8 @@ const sequelize = require("../config/database");
     });
   } catch (error) {
     await transaction.rollback();
+    console.log(" Transaction rolled back due to: Allocation not found.");
+
     console.error("Error processing EMI payment:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
@@ -262,6 +277,9 @@ exports.updateEMIPayment = async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 };
+
+
+
 
 
 
