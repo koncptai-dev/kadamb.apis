@@ -128,10 +128,14 @@ const Allocation = sequelize.define("Allocation", {
   allowNull: true,
   unique: true,
 },
+<<<<<<< HEAD
 },
 {
   tableName: "allocations",
   timestamps: true, 
+=======
+
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
 });
 
 module.exports = Allocation;

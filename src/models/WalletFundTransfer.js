@@ -17,11 +17,22 @@ const Wallet = sequelize.define(
       references: {
         model: AgentCommission, 
         key: 'agentId', 
+<<<<<<< HEAD
       },  
     },
   associateCode:{
     type: DataTypes.STRING,
     allowNull: true,
+=======
+      },
+    },
+  associateCode:{
+    type: DataTypes.STRING,
+    references:{
+      model:Agent,
+      key: 'associateCode', // Assuming Agent model has associateCode field
+    }
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
   },
     balance: {
       type: DataTypes.DECIMAL(10, 2),

@@ -98,7 +98,13 @@ identityProofUrl: {
 
 }, {
   timestamps: true,
+<<<<<<< HEAD
   tableName: 'agents', 
 });
 
 module.exports = Agent; 
+=======
+});
+
+module.exports = Agent; // ✅ Correct Export
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377

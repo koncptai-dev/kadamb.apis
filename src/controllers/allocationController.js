@@ -1,5 +1,6 @@
 const Allocation = require('../models/allocation');
 const EMIPayment = require('../models/emipayment');
+<<<<<<< HEAD
 const AllocationRequest=require('../models/AllocationRequest');
 const Agent = require('../models/Agent');
 const moment = require('moment'); // install if not already: npm install moment
@@ -38,6 +39,50 @@ exports.allocatePlot = async (req, res) => {
     console.error("Error Submitting Request:", error);
     return res.status(500).json({ error: "Internal server error" });
   }
+=======
+const Agent = require('../models/Agent');
+const moment = require('moment'); // install if not already: npm install moment
+
+
+// Allocate a plot to a customer
+exports.allocatePlot = async (req, res) => {
+    try {
+        const {
+            amount,
+            downPayment ,
+            emiDuration,
+            emiStartDate
+        } = req.body;
+
+        let emiMonthly = 0;
+        let emiEndDate = emiStartDate;
+
+        // Calculate EMI monthly and end date (no interest)
+        if (emiDuration && amount && amount > 0) {
+            const principal = amount - downPayment;
+
+            emiMonthly = principal / emiDuration;
+            emiMonthly = parseFloat(emiMonthly.toFixed(2)); // 2 decimal places
+
+            emiEndDate = moment(emiStartDate).add(emiDuration, 'months').format('YYYY-MM-DD');
+        }
+
+        // Create allocation with computed values
+        const allocation = await Allocation.create({
+            ...req.body,
+            emiMonthly,
+            emiEndDate
+        });
+
+        return res.status(201).json({
+            message: "Plot allocated successfully",
+            allocation
+        });
+    } catch (error) {
+        console.error("Error allocating plot:", error);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
 };
 
 
@@ -102,7 +147,11 @@ exports.updateAllocation = async (req, res) => {
             emiStartDate
         } = req.body;
 
+<<<<<<< HEAD
         const allocation = await AllocationRequest.findByPk(id);
+=======
+        const allocation = await Allocation.findByPk(id);
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
 
         if (!allocation) {
             return res.status(404).json({ error: "Allocation not found" });
@@ -127,7 +176,11 @@ exports.updateAllocation = async (req, res) => {
         });
 
         return res.status(200).json({
+<<<<<<< HEAD
             message: "AllocationRequest updated successfully",
+=======
+            message: "Allocation updated successfully",
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
             allocation
         });
     } catch (error) {
@@ -152,4 +205,8 @@ exports.deleteAllocation = async (req, res) => {
         console.error("Error deleting allocation:", error);
         return res.status(500).json({ error: "Internal server error" });
     }
+<<<<<<< HEAD
 };
+=======
+};
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377

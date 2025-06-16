@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node modules should not be committed
 node_modules/
 
@@ -16,3 +17,8 @@ Thumbs.db
 # IDE/editor config folders
 .vscode/
 .idea/
+=======
+node_modules
+.env
+src/uploads
+>>>>>>> 3dfa10798d5a344c2dfa09785c093ea62292b377
