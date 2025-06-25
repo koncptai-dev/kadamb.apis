@@ -1,9 +1,14 @@
 const CommissionLevel = require('../models/CommissionLevel');
 
-// ✅ Add a Commission Level
+//  Add a Commission Level
 exports.addCommissionLevel = async (req, res) => {
   try {
     const { level, commissionPercentage } = req.body;
+
+    //validation 
+    if(commissionPercentage < 0 || commissionPercentage>100){
+      return res.status(400).json({ message: 'Commission percentage cannot be more than 100% or negative' });
+    }
     const commissionLevel = await CommissionLevel.create({ level, commissionPercentage });
     res.status(201).json({ message: 'Commission Level added successfully', commissionLevel });
   } catch (error) {
@@ -11,7 +16,7 @@ exports.addCommissionLevel = async (req, res) => {
   }
 };
 
-// ✅ Get All Commission Levels
+//  Get All Commission Levels
 exports.getAllCommissionLevels = async (req, res) => {
   try {
     const commissionLevels = await CommissionLevel.findAll();
@@ -21,7 +26,7 @@ exports.getAllCommissionLevels = async (req, res) => {
   }
 };
 
-// ✅ Get a Single Commission Level by ID
+//  Get a Single Commission Level by ID
 exports.getCommissionLevelById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -34,12 +39,15 @@ exports.getCommissionLevelById = async (req, res) => {
   }
 };
 
-// ✅ Update a Commission Level
+// Update a Commission Level
 exports.updateCommissionLevel = async (req, res) => {
   try {
     const { id } = req.params;
     const { level, commissionPercentage } = req.body;
 
+    if(commissionPercentage < 0 || commissionPercentage>100){
+      return res.status(400).json({ message: 'Commission percentage cannot be more than 100% or negative' });
+    }
     const commissionLevel = await CommissionLevel.findByPk(id);
     if (!commissionLevel) return res.status(404).json({ message: 'Commission Level not found' });
 
@@ -50,14 +58,14 @@ exports.updateCommissionLevel = async (req, res) => {
   }
 };
 
-// ✅ Delete a Commission Level
+//  Delete a Commission Level
 exports.deleteCommissionLevel = async (req, res) => {
   try {
     const { id } = req.params;
-    const commissionLevel = await CommissionLevel.findByPk(id);
-    if (!commissionLevel) return res.status(404).json({ message: 'Commission Level not found' });
+    const commissionLevels = await CommissionLevel.findByPk(id);
+    if (!commissionLevels) return res.status(404).json({ message: 'Commission Level not found' });
 
-    await commissionLevel.destroy();
+    await commissionLevels.destroy();
     res.status(200).json({ message: 'Commission Level deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Error deleting Commission Level', error: error.message });

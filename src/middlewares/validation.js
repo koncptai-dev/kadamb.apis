@@ -5,14 +5,25 @@ exports.validateSignup = [
   check('last_name').trim().notEmpty().withMessage('Last name is required'),
   check('email').isEmail().withMessage('Invalid email').normalizeEmail(),
   check('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  check('role').isIn(['admin', 'agent', 'user']).withMessage('Invalid role'),
   check('address').trim().notEmpty().withMessage('Address is required'),
-  check('mobile_no')
+  check('mobileNo')
     .isNumeric().withMessage('Mobile number must be numeric')
-    .isLength({ min: 10, max: 15 }).withMessage('Mobile number should be between 10-15 digits'),
+    .isLength({  min:10,max: 10 }).withMessage('Mobile number should be  10 digits'),
 ];
 
 exports.validateLogin = [
   check('email').isEmail().withMessage('Invalid email').normalizeEmail(),
   check('password').notEmpty().withMessage('Password is required'),
+];
+
+exports.validateOfficeAgentSignup = [
+  check('fullName').trim().notEmpty().withMessage('Full name is required'),
+  check('mobileNo')
+    .trim().notEmpty().withMessage('Mobile number is required')
+    .isNumeric().withMessage('Mobile number must be numeric')
+    .isLength({min:10, max:10 }).withMessage('Mobile number should be 10 digits'),
+  check('email')
+  .trim().notEmpty().withMessage('Email is required')
+  .isEmail().withMessage('Invalid email').normalizeEmail(),
+  check('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
 ];

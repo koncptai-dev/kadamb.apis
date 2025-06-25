@@ -23,13 +23,13 @@ exports.createOfficeAgent = async (req, res) => {
     // Check if mobile number is already registered
     const existingAgent = await OfficeAgent.findOne({ where: { mobileNo } });
     if (existingAgent) {
-      return res.status(400).json({ message: 'Mobile number already registered' });
+      return res.status(400).json({ field: 'mobileNo', message: 'Mobile number already registered' });
     }
 
     // Check if email is already registered
-    const existingAgentByEmail = await OfficeAgent.findOne({ where: { email } });
+    const existingAgentByEmail = await OfficeAgent.findOne({ where: { email } }); 
     if (existingAgentByEmail) {
-      return res.status(400).json({ message: 'Email already registered' });
+      return res.status(400).json({ field: 'email', message: 'Email already registered' });
     }
 
     let validatedParentId = null;
@@ -47,6 +47,7 @@ exports.createOfficeAgent = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const associateCode = await generateAssociateCode();
 
+    const joiningDate=new Date();
     // Create new agent
     const newAgent = await OfficeAgent.create({
       associateCode,
@@ -55,6 +56,7 @@ exports.createOfficeAgent = async (req, res) => {
       email,
       password: hashedPassword,
       parentId: validatedParentId, // Ensuring it's either a valid ID or NULL
+      joiningDate,
       ...otherDetails,
     });
 
@@ -71,12 +73,12 @@ exports.loginofficeAgent = async (req, res) => {
 
     const agent = await OfficeAgent.findOne({ where: { associateCode } });
     if (!agent) {
-      return res.status(404).json({ message: 'Agent not found' });
+      return res.status(404).json({ message: 'Invalid AssociateCode or Password' });
     }
 
     const isMatch = await bcrypt.compare(password, agent.password);
     if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(401).json({ message: 'Invalid AssociateCode or Password' });
     }
 
     const token = jwt.sign({ id: agent.id, associateCode: agent.associateCode }, process.env.JWT_SECRET, {
@@ -88,6 +90,27 @@ exports.loginofficeAgent = async (req, res) => {
     res.status(500).json({ message: 'Login error', error: error.message });
   }
 };
+
+exports.updateOfficeAgent = async (req, res) => {
+  try{
+      const { id } = req.params;
+      const { fullName, mobileNo, email, parentId, ...otherDetails } = req.body;
+      const agent = await OfficeAgent.findByPk(id);
+      if (!agent) {
+        return res.status(404).json({ message: 'Agent not found' });
+      }
+      await agent.update({
+        fullName,
+        mobileNo,
+        email,
+        parentId: parentId || null, 
+        ...otherDetails,
+      })
+          res.status(200).json({ message: 'Agent updated successfully', agent });
+  }catch{
+    res.status(500).json({ message: 'Error updating agent', error: error.message });
+  }
+}
 
 //get agents
 exports.getAgents = async (req, res) => {

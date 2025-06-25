@@ -6,7 +6,7 @@ const adminapproveController=require("../controllers/adminapproveController")
 router.put("/approve/:id", adminapproveController.approvePendingAllocation);
 
 // Deny a pending allocation request (by Admin)
-router.put("/deny/:id", adminapproveController.denyPendingAllocation);
+router.delete("/deny/:id", adminapproveController.denyPendingAllocation);
 
 router.get("/requests/pending", adminapproveController.getAllPendingRequests);
 

@@ -11,7 +11,7 @@ const OfficeAgent = sequelize.define('OfficeAgent', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'OfficeAgents', // ✅ model name (not table name)
+      model: 'OfficeAgents', //  model name (not table name)
       key: 'id',
     },
   },
@@ -35,8 +35,7 @@ const OfficeAgent = sequelize.define('OfficeAgent', {
     allowNull: false,
   },
   joiningDate: {
-    type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW,
+    type: DataTypes.DATEONLY,
   },
   fullName: DataTypes.STRING,
   dob: DataTypes.DATEONLY,
@@ -44,15 +43,11 @@ const OfficeAgent = sequelize.define('OfficeAgent', {
   gender: DataTypes.STRING,
   city: DataTypes.STRING,
   state: DataTypes.STRING,
-  address: DataTypes.TEXT,
-  pinNo: DataTypes.STRING,
-  status: {
-    type: DataTypes.STRING,
-    defaultValue: "pending",
-  },
+  address: {type:DataTypes.TEXT,allowNull:false},
+  pinNo: {type:DataTypes.STRING,allowNull:false},
   resetCode: DataTypes.STRING,
 }, {
-  tableName: 'officeagents',   // ✅ ensure correct table mapping
+  tableName: 'officeagents',   //  ensure correct table mapping
   timestamps: true,
 });
 

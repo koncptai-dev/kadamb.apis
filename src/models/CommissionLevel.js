@@ -5,12 +5,12 @@ const CommissionLevel = sequelize.define('CommissionLevel', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
-    primaryKey: true, // ✅ Set this as the primary key
+    primaryKey: true, //  Set this as the primary key
   },
   level: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    unique: true, // ✅ Ensure level is unique, but NOT primary key
+    unique: true, //  Ensure level is unique, but NOT primary key
   },
   commissionPercentage: {
     type: DataTypes.FLOAT,

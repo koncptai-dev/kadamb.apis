@@ -1,5 +1,5 @@
 const Plot = require("../models/Plot");
-const { Sequelize } = require("sequelize");
+const { Sequelize,UniqueConstraintError } = require("sequelize");
 const fs = require('fs');
 const path = require('path');
 const { log } = require("console");
@@ -9,37 +9,51 @@ exports.addPlot = async (req, res) => {
   try {
     const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
 
-     const image = `uploads/uploadimagesmap/${req.file.filename}`;
+        const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
     
+            if (price && downPayment && downPayment > price) {
+          return res.status(400).json({
+            success: false,
+            message: "Down payment cannot be greater than price"
+          });
+        }
+
+        if (latitude && (latitude < -90 || latitude > 90)) {
+          return res.status(400).json({ success: false, message: "Invalid latitude" });
+        }
+
+        if (longitude && (longitude < -180 || longitude > 180)) {
+          return res.status(400).json({ success: false, message: "Invalid longitude" });
+        }
     //  EMI calculation
     let emiAmount = null;
 
-      if (emiDuration && price && downPayment != null) {
+      if ( emiDuration != null &&  !isNaN(emiDuration) && emiDuration > 0 && price != null && downPayment != null && price > downPayment) {
         emiAmount = (price - downPayment) / emiDuration;
       }
 
       const parsePlotSize = (input) => {
-        if (typeof input === 'number') return input;
-        if (typeof input !== 'string') return NaN;
-      
-        const match = input.match(/^(\d+(?:\.\d+)?)\s*[xX\*]\s*(\d+(?:\.\d+)?)/);
-        if (!match) return NaN;
-      
+              if (typeof input !== 'string') return { width: null, length: null, area: NaN };
+        const match = input.match(/^(\d+(?:\.\d+)?)\s*[xX*]\s*(\d+(?:\.\d+)?)/);
+        if (!match) return { width: null, length: null, area: NaN };
         const width = parseFloat(match[1]);
         const length = parseFloat(match[2]);
-        return width * length;
+        const area = width * length;
+        return { width, length, area };
       };
       
-      const parsedPlotSize = parsePlotSize(plotSize);
-      if (isNaN(parsedPlotSize)) {
+      const { width, length, area } = parsePlotSize(plotSize);
+      if (isNaN(area)) {
         return res.status(400).json({ success: false, message: "Invalid plot size format. Use 'Width x Length' or numeric value." });
       }
       
-      const yard = parsedPlotSize / 9;
+      const yard = area / 9;
       
     const newPlot = await Plot.create({
       projectName,
-      plotSize:parsedPlotSize,
+      plotSize:area,
+      width,
+      length,
       yard,
       plotNumber,
       position,
@@ -54,16 +68,24 @@ exports.addPlot = async (req, res) => {
     });
 
     res.status(201).json({ success: true, message: "Plot added successfully", plot: newPlot });
-  } catch (error) {
+  }catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      return res.status(400).json({
+        success: false,
+        message: "Plot number already exists for this project",
+      });
+    }
     console.error("Error adding plot:", error);
-    res.status(500).json({ success: false, message: "Error adding plot", error: error.message });
+    return res.status(500).json({ success: false, message: "Error adding plot", error: error.message });
   }
 };
 
 // Get all plots
 exports.getAllPlots = async (req, res) => {
   try {
-    const plots = await Plot.findAll();
+    const plots = await Plot.findAll(
+      
+    );
     res.status(200).json({ plots });
   } catch (error) {
     console.error("Error fetching plots:", error);
@@ -75,49 +97,61 @@ exports.getAllPlots = async (req, res) => {
 exports.updatePlot = async (req, res) => {
   try {
     const { id } = req.params;
-    const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null, latitude, longitude } = req.body;
+    let { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null, latitude, longitude } = req.body;
 
     const plot = await Plot.findByPk(id);
     if (!plot) {
       return res.status(404).json({ success: false, message: "Plot not found" });
     }
 
-    // Validate coordinates
+      latitude = latitude === "" ? null : parseFloat(latitude);
+      longitude = longitude === "" ? null : parseFloat(longitude);
+
+    // Validate coordinates only if both are provided
     const isValidLatLng = (lat, lng) => {
-      const latNum = parseFloat(lat);
-      const lngNum = parseFloat(lng);
-      return !isNaN(latNum) && !isNaN(lngNum) &&
-             latNum >= -90 && latNum <= 90 &&
-             lngNum >= -180 && lngNum <= 180;
+      return typeof lat === "number" && typeof lng === "number" &&
+             lat >= -90 && lat <= 90 &&
+             lng >= -180 && lng <= 180;
     };
 
-    if (!isValidLatLng(latitude, longitude)) {
+    if ((latitude !== null || longitude !== null) && !isValidLatLng(latitude, longitude)) {
       return res.status(400).json({ success: false, message: "Invalid latitude or longitude" });
     }
+        if (price && downPayment && downPayment > price) {
+          return res.status(400).json({
+            success: false,
+            message: "Down payment cannot be greater than price"
+          });
+        }
 
+        if (latitude && (latitude < -90 || latitude > 90)) {
+          return res.status(400).json({ success: false, message: "Invalid latitude" });
+        }
+
+        if (longitude && (longitude < -180 || longitude > 180)) {
+          return res.status(400).json({ success: false, message: "Invalid longitude" });
+        }
     // Plot size parsing
     const parsePlotSize = (input) => {
-      if (typeof input === 'number') return input;
-      if (typeof input !== 'string') return NaN;
-
-      const match = input.match(/^(\d+(?:\.\d+)?)\s*[xX\*]\s*(\d+(?:\.\d+)?)/);
-      if (!match) return NaN;
-
+      if (typeof input !== 'string') return { width: null, length: null, area: NaN };
+      const match = input.match(/^(\d+(?:\.\d+)?)\s*[xX*]\s*(\d+(?:\.\d+)?)/);
+      if (!match) return { width: null, length: null, area: NaN };
       const width = parseFloat(match[1]);
       const length = parseFloat(match[2]);
-      return width * length;
+      const area = width * length;
+      return { width, length, area };
     };
 
-    const parsedPlotSize = parsePlotSize(plotSize);
-    if (isNaN(parsedPlotSize)) {
+    const {width,length,area} = parsePlotSize(plotSize);
+    if (isNaN(area)) {
       return res.status(400).json({ success: false, message: "Invalid plot size format. Use 'Width x Length' or numeric value." });
     }
 
-    const yard = parsedPlotSize / 9;
+    const yard = area / 9;
 
     // EMI calculation
     let emiAmount = null;
-    if (emiDuration && price && downPayment != null) {
+      if ( emiDuration != null &&  !isNaN(emiDuration) && emiDuration > 0 && price != null && downPayment != null && price > downPayment) {
       emiAmount = (price - downPayment) / emiDuration;
     }
 
@@ -125,10 +159,13 @@ exports.updatePlot = async (req, res) => {
     let image = plot.imageUrl;
     if (req.file?.filename) {
       const newImagePath = `uploads/uploadimagesmap/${req.file.filename}`;
-      if (plot.imageUrl && fs.existsSync(plot.imageUrl) && plot.imageUrl !== newImagePath) {
-        fs.unlink(plot.imageUrl, (err) => {
-          if (err) console.error("Failed to delete old image:", err);
-        });
+      const absoluteOldPath = path.resolve(plot.imageUrl || "");
+      if (plot.imageUrl && fs.existsSync(absoluteOldPath) && plot.imageUrl !== newImagePath) {
+        try {
+          fs.unlinkSync(absoluteOldPath);
+        } catch (err) {
+          console.error("Failed to delete old image:", err.message);
+        }
       }
       image = newImagePath;
     }
@@ -136,7 +173,9 @@ exports.updatePlot = async (req, res) => {
     // Perform update
     await plot.update({
       projectName,
-      plotSize: parsedPlotSize,
+      plotSize: area,
+      width,
+      length,
       yard,
       plotNumber,
       position,
@@ -250,137 +289,4 @@ exports.getPlotPrice = async (req, res) => {
   }
 };
 
-// Get all plots
-exports.getAllPlots = async (req, res) => {
-  try {
-    const plots = await Plot.findAll();
-    res.status(200).json({ plots });
-  } catch (error) {
-    console.error("Error fetching plots:", error);
-    res.status(500).json({ success: false, message: "Error fetching plots", error: error.message });
-  }
-};
 
-// Update a plot
-exports.updatePlot = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude } = req.body;
-
-    const plot = await Plot.findByPk(id);
-    if (!plot) {
-      return res.status(404).json({ success: false, message: "Plot not found" });
-    }
-    //recalculate yard
-    if(plotSize || !isNaN(plotSize)){
-      yard= plotSize / 9;
-    }
-
-    //  EMI calculation
-    let emiAmount = null;
-
-      if (emiDuration && price && downPayment != null) {
-        emiAmount = (price - downPayment) / emiDuration;
-      }
-
-    await plot.update({
-      projectName,
-      plotSize,
-      yard,
-      plotNumber,
-      position,
-      status,
-      price,
-      downPayment,
-      emiDuration,
-      emiAmount,
-      latitude,    // ✅ add
-      longitude, 
-    });
-
-    res.status(200).json({ success: true, message: "Plot updated successfully", plot });
-  } catch (error) {
-    console.error("Error updating plot:", error);
-    res.status(500).json({ success: false, message: "Error updating plot", error: error.message });
-  }
-};
-
-
-exports.getPlotByNumber = async (req, res) => {
-  try {
-    const { projectName, plotNumber } = req.params;
-    const plot = await Plot.findOne({
-      where: { projectName, plotNumber, status: "Available" },
-    });
-
-    if (!plot) {
-      return res.status(404).json({ success: false, message: "Plot not available or does not exist" });
-    }
-
-    res.status(200).json({ success: true, plot });
-  } catch (error) {
-    console.error("Error fetching plot:", error);
-    res.status(500).json({ success: false, message: "Error fetching plot", error: error.message });
-  }
-};
-
-
-exports.getAvailablePlotSizesByProject = async (req, res) => {
-  try {
-    const { projectName } = req.params;
-
-    const plots = await Plot.findAll({
-      attributes: ["plotSize", "plotNumber"],
-      where: { projectName, status: "Available" },
-      order: [["plotSize", "ASC"], ["plotNumber", "ASC"]],
-    });
-
-    // Organize data by plotSize
-    const sizesWithPlots = plots.reduce((acc, plot) => {
-      if (!acc[plot.plotSize]) {
-        acc[plot.plotSize] = [];
-      }
-      acc[plot.plotSize].push(plot.plotNumber);
-      return acc;
-    }, {});
-
-    res.status(200).json({ success: true, sizes: sizesWithPlots });
-  } catch (error) {
-    console.error("Error fetching plot sizes:", error);
-    res.status(500).json({ success: false, message: "Error fetching plot sizes", error: error.message });
-  }
-};
-
-exports.getAvailablePlotsByProject = async (req, res) => {
-  try {
-    const { projectName } = req.params;
-    const availablePlots = await Plot.findAll({
-      where: { projectName, status: "Available" },
-    });
-
-    res.status(200).json({ success: true, plots: availablePlots });
-  } catch (error) {
-    console.error("Error fetching available plots:", error);
-    res.status(500).json({ success: false, message: "Error fetching available plots", error: error.message });
-  }
-};
-
-// Get plot price by projectName and plotNumber
-exports.getPlotPrice = async (req, res) => {
-  try {
-    const { projectName, plotNumber } = req.params;
-
-    const plot = await Plot.findOne({
-      where: { projectName, plotNumber },
-    });
-
-    if (!plot) {
-      return res.status(404).json({ success: false, message: "Plot not found" });
-    }
-
-    res.status(200).json({ success: true, price: plot.price });
-  } catch (error) {
-    console.error("Error fetching plot price:", error);
-    res.status(500).json({ success: false, message: "Error fetching plot price", error: error.message });
-  }
-};

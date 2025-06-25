@@ -38,7 +38,6 @@ const getUplineAgents = async (agentId, visited = new Set()) => {
         uplines.push(parentAgent);
         currentAgent = parentAgent;
     }
-
     return uplines;
 };
 

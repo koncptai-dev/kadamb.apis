@@ -22,7 +22,6 @@ const Agent = sequelize.define('Agent', {
       key: 'id',
     },
     allowNull: false
-    
   },
   commissionPercentage: {
     type: DataTypes.FLOAT,
@@ -40,14 +39,13 @@ const Agent = sequelize.define('Agent', {
   mobileNo: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: { len: [10, 15] },
   },
   password: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   joiningDate: {
-    type: DataTypes.DATE,
+    type: DataTypes.DATEONLY,
     defaultValue: DataTypes.NOW,
   },
   fullName: DataTypes.STRING,

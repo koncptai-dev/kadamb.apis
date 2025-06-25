@@ -38,9 +38,6 @@ const path = require('path');
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// app.use('/uploadimagesmap', express.static('uploadimagesmap'));
-
-// app.use('/uploads', express.static('uploads'));
 app.use('/api/agent', agent);
 app.use('/api/officeagent', OfficeAgent); // Use Office Agent Routes
 app.use('/api', uploadRoutes);

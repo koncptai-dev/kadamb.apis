@@ -3,7 +3,6 @@ const Allocation = require("../models/allocation");
 const AgentCommission = require("../models/AgentCommission");
 const AgentCommissionTracker = require("../models/AgentCommissionTracker");
 const Agent = require("../models/Agent");
-const CommissionLevel  = require("../models/CommissionLevel");
 const moment=require("moment");
 const sequelize = require("../config/database");
 
@@ -34,11 +33,6 @@ const sequelize = require("../config/database");
     }
     if (allocation.remainingEmi === null || allocation.remainingEmi === 0) {
       allocation.remainingEmi = allocation.emiDuration;
-    }
-
-    if (allocation.remainingEmiAmount === 0 || allocation.remainingEmi === 0) {
-      await transaction.rollback();
-      return res.status(400).json({ error: "All EMIs are already paid." });
     }
 
     let updatedRemainingEmiAmount = parseFloat(allocation.remainingEmiAmount) - parseFloat(emiAmountPaid);
@@ -73,6 +67,11 @@ const sequelize = require("../config/database");
 
     const receiptNumber = lastEmiPayment ? lastEmiPayment.receiptNumber + 1 : 1; // Increment the last receipt number or set to 1 for the first payment.
 
+    if (allocation.remainingEmiAmount === 0 || allocation.remainingEmi === 0) {
+      await transaction.rollback();
+      return res.status(400).json({ error: "All EMIs are already paid." });
+    }
+
     const emiPayment = await EMIPayment.create({
       allocationId,
       emiAmountPaid,
@@ -106,7 +105,7 @@ console.log("➡️ allocation.agentId =", allocation.agentId);
 
 if (!agent) {
   await transaction.rollback();
-  console.log("❌ Agent not found for this property allocation.");
+  console.log(" Agent not found for this property allocation.");
   return res.status(404).json({ error: "Agent not found for this property allocation." });
 }
 
