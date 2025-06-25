@@ -9,6 +9,10 @@ exports.addCommissionLevel = async (req, res) => {
     if(commissionPercentage < 0 || commissionPercentage>100){
       return res.status(400).json({ message: 'Commission percentage cannot be more than 100% or negative' });
     }
+    const exsitscommissionLevels = await CommissionLevel.findOne({ where: { level } });
+    if (exsitscommissionLevels) {
+      return res.status(400).json({ message: 'Commission Level already exists' });
+    }
     const commissionLevel = await CommissionLevel.create({ level, commissionPercentage });
     res.status(201).json({ message: 'Commission Level added successfully', commissionLevel });
   } catch (error) {
