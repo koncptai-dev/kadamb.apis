@@ -5,9 +5,7 @@ const Plot = sequelize.define("Plot", {
   projectName: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: {
-      notEmpty: true,
-    }
+   
   },
     width: {
     type: DataTypes.FLOAT,
@@ -21,9 +19,7 @@ const Plot = sequelize.define("Plot", {
   plotSize: {
     type: DataTypes.FLOAT,
     allowNull: false,
-    validate: {
-      min: 1,
-    },
+   
   },
   yard: {
     type: DataTypes.FLOAT,
@@ -33,16 +29,12 @@ const Plot = sequelize.define("Plot", {
     type: DataTypes.STRING,
     allowNull: false,
     unique:true,
-    validate: {
-      notEmpty: true,
-    }
+   
   },
   position: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: {
-      notEmpty: true,
-    }
+   
   },
   status: {
     type: DataTypes.ENUM("Available", "Hold", "Sold"),
@@ -71,18 +63,12 @@ const Plot = sequelize.define("Plot", {
   latitude: {
     type: DataTypes.FLOAT,
     allowNull: true,
-    validate: {
-      min: -90,
-      max: 90
-    }
+   
   },
   longitude: {
     type: DataTypes.FLOAT,
     allowNull: true,
-    validate: {
-      min: -180,
-      max: 180
-    }
+   
   },
   imageUrl: {
     type: DataTypes.STRING,

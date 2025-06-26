@@ -18,13 +18,6 @@ exports.addPlot = async (req, res) => {
           });
         }
 
-        if (latitude && (latitude < -90 || latitude > 90)) {
-          return res.status(400).json({ success: false, message: "Invalid latitude" });
-        }
-
-        if (longitude && (longitude < -180 || longitude > 180)) {
-          return res.status(400).json({ success: false, message: "Invalid longitude" });
-        }
     //  EMI calculation
     let emiAmount = null;
 
@@ -104,19 +97,7 @@ exports.updatePlot = async (req, res) => {
       return res.status(404).json({ success: false, message: "Plot not found" });
     }
 
-      latitude = latitude === "" ? null : parseFloat(latitude);
-      longitude = longitude === "" ? null : parseFloat(longitude);
-
-    // Validate coordinates only if both are provided
-    const isValidLatLng = (lat, lng) => {
-      return typeof lat === "number" && typeof lng === "number" &&
-             lat >= -90 && lat <= 90 &&
-             lng >= -180 && lng <= 180;
-    };
-
-    if ((latitude !== null || longitude !== null) && !isValidLatLng(latitude, longitude)) {
-      return res.status(400).json({ success: false, message: "Invalid latitude or longitude" });
-    }
+   
         if (price && downPayment && downPayment > price) {
           return res.status(400).json({
             success: false,
@@ -124,13 +105,7 @@ exports.updatePlot = async (req, res) => {
           });
         }
 
-        if (latitude && (latitude < -90 || latitude > 90)) {
-          return res.status(400).json({ success: false, message: "Invalid latitude" });
-        }
-
-        if (longitude && (longitude < -180 || longitude > 180)) {
-          return res.status(400).json({ success: false, message: "Invalid longitude" });
-        }
+        
     // Plot size parsing
     const parsePlotSize = (input) => {
       if (typeof input !== 'string') return { width: null, length: null, area: NaN };

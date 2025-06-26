@@ -63,7 +63,7 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true // if you're using cookies/sessions
 }));
-
+  
 
 sequelize.sync({ alter: true }) // ✅ This ensures new models are created
   .then(() => console.log('✅ Database Synced'))
