@@ -19,7 +19,7 @@ const Plot = sequelize.define("Plot", {
   plotSize: {
     type: DataTypes.FLOAT,
     allowNull: false,
-    
+   
   },
   yard: {
     type: DataTypes.FLOAT,
@@ -29,7 +29,7 @@ const Plot = sequelize.define("Plot", {
     type: DataTypes.STRING,
     allowNull: false,
     unique:true,
-    
+   
   },
   position: {
     type: DataTypes.STRING,
@@ -63,12 +63,12 @@ const Plot = sequelize.define("Plot", {
   latitude: {
     type: DataTypes.FLOAT,
     allowNull: true,
-  
+   
   },
   longitude: {
     type: DataTypes.FLOAT,
     allowNull: true,
-    
+   
   },
   imageUrl: {
     type: DataTypes.STRING,

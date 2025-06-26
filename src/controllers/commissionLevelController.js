@@ -53,6 +53,12 @@ exports.updateCommissionLevel = async (req, res) => {
       return res.status(400).json({ message: 'Commission percentage cannot be more than 100% or negative' });
     }
     const commissionLevel = await CommissionLevel.findByPk(id);
+    console.log(commissionLevel);
+    
+     const exsitscommissionLevels = await CommissionLevel.findOne({ where: { level } });
+    if (exsitscommissionLevels) {
+      return res.status(400).json({ message: 'Commission Level already exists' });
+    }
     if (!commissionLevel) return res.status(404).json({ message: 'Commission Level not found' });
 
     await commissionLevel.update({ level, commissionPercentage });
