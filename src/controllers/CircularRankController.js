@@ -8,6 +8,10 @@ exports.createCircularRank = async (req, res) => {
         if (!name || !target_amount || !reward_amount || !rank_level) {
             return res.status(400).json({ success: false, message: "All fields are required" });
         }
+        const exists = await CircularRank.findOne({ where:{rank_level}});
+    if (exists) {
+      return res.status(400).json({ success: false, message: " Rank Level already exists" });
+    }
         // Create new CircularRank entry
         const circularRank = await CircularRank.create({
             name,
@@ -40,7 +44,10 @@ exports.updateCircularRank = async (req, res) => {
     if (!circularRank) {
       return res.status(404).json({ message: 'Circular Rank not found' });
     }
-
+        const exists = await CircularRank.findOne({ where:{rank_level}});
+    if (exists) {
+      return res.status(400).json({ success: false, message: "Rank Level already exists" });
+    }
     await CircularRank.update(
       { name, target_amount, reward_amount, rank_level },
       { where: { id } }

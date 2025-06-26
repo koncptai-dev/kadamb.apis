@@ -52,28 +52,17 @@ const Plot = sequelize.define("Plot", {
   price: {
     type: DataTypes.FLOAT,
     allowNull: false,
-    validate: {
-      min: 1,
-    }
+    
   },
   downPayment: {
     type: DataTypes.FLOAT,
     allowNull: true,
-    validate: {
-      min: 0,
-      isLessThanPrice(value) {
-        if (value && this.price && value > this.price) {
-          throw new Error("Down payment cannot be greater than price");
-        }
-      },
-    },
+   
   },
   emiDuration: {
     type: DataTypes.INTEGER,
     allowNull: true,
-    validate: {
-      min: 1,
-    },
+   
   },
   emiAmount: {
     type: DataTypes.FLOAT,
