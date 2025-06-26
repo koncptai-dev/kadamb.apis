@@ -132,7 +132,6 @@ const Allocation = sequelize.define("Allocation", {
 {
   tableName: "allocations",
   timestamps: true, 
-
 });
 
 module.exports = Allocation;

@@ -14,7 +14,7 @@ const getSubAgents = async (agentIds) => {
         allSubAgents.push(...subAgentIds);
         subAgents = await Agent.findAll({ where: { parentId: { [Op.in]: subAgentIds } } });
     }
-    
+
     return allSubAgents;
 };
 
@@ -57,7 +57,7 @@ exports.getDueInstallments = async (req, res) => {
         
             while (emiStartDate <= lastMonthToCheck) {
                 let monthPaid = payments.some(payment => 
-                    moment(payment.createdAt).format("YYYY-MM") === emiStartDate.format("YYYY-MM")
+                    moment(payment.paymentDate).format("YYYY-MM") === emiStartDate.format("YYYY-MM")
                 );
         
                 if (!monthPaid) {
@@ -72,8 +72,7 @@ exports.getDueInstallments = async (req, res) => {
                         missingMonth: emiStartDate.format("MMMM YYYY") // Separate entry per month
                     });
                 }
-        
-                emiStartDate.add(1, "month"); // Move to next month
+                emiStartDate.add(1, "month"); // Move to next month 
             }          
         }
         

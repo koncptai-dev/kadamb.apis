@@ -12,6 +12,13 @@ exports.allocatePlot = async (req, res) => {
     if (!customerPAN || customerPAN.trim() === "") {
       return res.status(400).json({ error: "Customer PAN is required." });
     }
+     const existingRequest = await AllocationRequest.findOne({ where: {customerPAN}})
+    if (existingRequest) {
+      return res.status(400).json({ error: "Customer PanCard is already there" });}
+     const existingRequestAdhar = await AllocationRequest.findOne({ where: {customerAadhar}})
+    if (existingRequestAdhar) {
+      return res.status(400).json({ error: "Customer AdharCard is already there" });}
+
 
     // Proceed with EMI calculations
     let emiMonthly = 0;
@@ -107,6 +114,12 @@ exports.updateAllocation = async (req, res) => {
         if (!allocation) {
             return res.status(404).json({ error: "Allocation not found" });
         }
+             const existingRequest = await AllocationRequest.findOne({ where: {customerPAN}})
+              if (existingRequest) {
+                return res.status(400).json({ error: "Customer PanCard is already there" });}
+              const existingRequestAdhar = await AllocationRequest.findOne({ where: {customerAadhar}})
+              if (existingRequestAdhar) {
+                return res.status(400).json({ error: "Customer AdharCard is already there" });}
 
         let emiMonthly = allocation.emiMonthly;  
         let emiEndDate = allocation.emiEndDate;  
@@ -140,14 +153,13 @@ exports.updateAllocation = async (req, res) => {
 // Delete an allocation
 exports.deleteAllocation = async (req, res) => {
     try {
-        const { id } = req.params;
-        const allocation = await Allocation.findByPk(id);
-
-        if (!allocation) {
-            return res.status(404).json({ error: "Allocation not found" });
+        const pending = await AllocationRequest.findByPk(id);
+        if (!pending || pending.status !== 'pending') {
+          return res.status(404).json({ error: 'Request not found or already processed' });
         }
-        await allocation.destroy();
-        return res.status(200).json({ message: "Allocation deleted successfully" });
+        // Delete the pending allocation request
+        await pending.destroy();
+       res.status(200).json({ message: 'Request denied and deleted' });
     } catch (error) {
         console.error("Error deleting allocation:", error);
         return res.status(500).json({ error: "Internal server error" });

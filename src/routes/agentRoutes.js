@@ -2,6 +2,21 @@ const express = require('express');
 const router = express.Router();
 const agentController = require('../controllers/agentController');
 const authenticateToken =  require('../middlewares/auth');
+// const { validationResult } = require('express-validator');
+// const { validateSignup, validateLogin } = require('../middlewares/validation');
+
+// const handleValidation = (req, res, next) => {
+//   const errors = validationResult(req);
+
+//   if (!errors.isEmpty()) {
+//     const formattedErrors = {};
+//     errors.array().forEach(err => {
+//       formattedErrors[err.param] = err.msg;
+//     });
+//     return res.status(400).json({ errors: formattedErrors });
+//   }
+//   next();
+// };
 
 router.post('/register', agentController.registerAgent);
 router.post('/login', agentController.loginAgent);

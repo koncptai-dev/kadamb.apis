@@ -11,13 +11,13 @@ exports.loginSuperAdmin = async (req, res) => {
     // Find super admin by email
     const superAdmin = await SuperAdmin.findOne({ where: { email } });
     if (!superAdmin) {
-      return res.status(404).json({ message: "Super Admin not found" });
+      return res.status(404).json({ message: "Invalid UserName or Password" });
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, superAdmin.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid UserName or Password" });
     }
 
     // Generate JWT Token
