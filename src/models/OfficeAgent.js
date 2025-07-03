@@ -28,7 +28,6 @@ const OfficeAgent = sequelize.define('OfficeAgent', {
   mobileNo: {
     type: DataTypes.STRING,
     allowNull: false,
-    validate: { len: [10, 15] },
   },
   password: {
     type: DataTypes.STRING,

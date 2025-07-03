@@ -9,6 +9,9 @@ const Target = require("./Target");
 const CommissionLevel = require("./CommissionLevel");
 const Wallet = require("./WalletFundTransfer");
 const AllocationRequest = require("./AllocationRequest");
+const AgentCircularReward = require("./AgentCircularReward");
+const CircularRank = require("./CircularRank");
+
 
 // Define associations after initializing both models
 Allocation.hasMany(EMIPayment, { foreignKey: "allocationId", as: "payments" });
@@ -33,6 +36,9 @@ Agent.hasMany(Wallet, { foreignKey: 'agentId', as: 'walletTransfers' });
 Agent.hasMany(AllocationRequest, { foreignKey: "agentId" });
 AllocationRequest.belongsTo(Agent, { foreignKey: "agentId", as: "agent" });
 
+AgentCircularReward.belongsTo(CircularRank, {foreignKey: "circularId", as: "CircularRank"});
+CircularRank.hasMany(AgentCircularReward, {foreignKey: "circularId",as: "rewards"});
+
 module.exports = {
     sequelize,
     Allocation,
@@ -43,6 +49,8 @@ module.exports = {
     Target,
     CommissionLevel,
     Wallet,
-    AllocationRequest
+    AllocationRequest,
+    AgentCircularReward,
+    CircularRank
   };
   

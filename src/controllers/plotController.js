@@ -9,9 +9,9 @@ exports.addPlot = async (req, res) => {
   try {
     const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
 
-        const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
+        const image = `uploads/uploadimagesmap/${req.file.filename}` ;
     
-            if (price && downPayment && downPayment > price) {
+          if (Number(price) && Number(downPayment) && Number(downPayment) > Number(price)) {
           return res.status(400).json({
             success: false,
             message: "Down payment cannot be greater than price"
@@ -96,16 +96,12 @@ exports.updatePlot = async (req, res) => {
     if (!plot) {
       return res.status(404).json({ success: false, message: "Plot not found" });
     }
-
-   
-        if (price && downPayment && downPayment > price) {
+        if (Number(price) && Number(downPayment) && Number(downPayment) > Number(price)) {
           return res.status(400).json({
             success: false,
             message: "Down payment cannot be greater than price"
           });
         }
-
-        
     // Plot size parsing
     const parsePlotSize = (input) => {
       if (typeof input !== 'string') return { width: null, length: null, area: NaN };

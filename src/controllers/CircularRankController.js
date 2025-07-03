@@ -3,26 +3,21 @@ const { Op } = require('sequelize');
 
 exports.createCircularRank = async (req, res) => {
     try {
-        const { name, target_amount, reward_amount, rank_level } = req.body;
+        const { name, target_amount, reward_amount, rank_level,month } = req.body;
         // Validate input
-        if (!name || !target_amount || !reward_amount || !rank_level) {
-            return res.status(400).json({ success: false, message: "All fields are required" });
-        }
+
         const exists = await CircularRank.findOne({ where:{rank_level}});
-    if (exists) {
-      return res.status(400).json({ success: false, message: " Rank Level already exists" });
-    }
+        if (exists) {
+          return res.status(400).json({ success: false, message: " Rank Level already exists" });
+        }
         // Create new CircularRank entry
         const circularRank = await CircularRank.create({
-            name,
-            target_amount,
-            reward_amount,
-            rank_level
+            name, target_amount, reward_amount, rank_level, month
         });
         res.status(201).json({ message: 'CircularRank added successfully', data: circularRank });
     } catch (error) {
         console.error("Error creating CircularRank:", error);
-        res.status(500).json({ success: false, message: "Server error" });
+        res.status(500).json({ success: false, message: error.message });
     }
 }
 
@@ -38,18 +33,15 @@ exports.getCircularRanks = async (req, res) => {
 exports.updateCircularRank = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, target_amount, reward_amount, rank_level } = req.body;
+    const { name, target_amount, reward_amount, rank_level,month } = req.body;
 
     const circularRank = await CircularRank.findByPk(id);
     if (!circularRank) {
       return res.status(404).json({ message: 'Circular Rank not found' });
     }
-        const exists = await CircularRank.findOne({ where:{rank_level}});
-    if (exists) {
-      return res.status(400).json({ success: false, message: "Rank Level already exists" });
-    }
+       
     await CircularRank.update(
-      { name, target_amount, reward_amount, rank_level },
+      { name, target_amount, reward_amount,month },
       { where: { id } }
     );
 

@@ -7,7 +7,7 @@ const moment = require('moment'); // install if not already: npm install moment
 // AllocationRequest a plot to a customer
 exports.allocatePlot = async (req, res) => {
   try {
-    const { customerPAN, amount, downPayment, emiDuration, emiStartDate } = req.body;
+    const { customerPAN, amount, downPayment, customerAadhar,emiDuration, emiStartDate } = req.body;
 
     if (!customerPAN || customerPAN.trim() === "") {
       return res.status(400).json({ error: "Customer PAN is required." });

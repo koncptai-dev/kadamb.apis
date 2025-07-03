@@ -5,7 +5,6 @@ const Plot = sequelize.define("Plot", {
   projectName: {
     type: DataTypes.STRING,
     allowNull: false,
-   
   },
     width: {
     type: DataTypes.FLOAT,

@@ -9,7 +9,7 @@ const authenticateToken =  require('../middlewares/auth');
 //   const errors = validationResult(req);
 
 //   if (!errors.isEmpty()) {
-//     const formattedErrors = {};
+//     const formattedErrors = {};  
 //     errors.array().forEach(err => {
 //       formattedErrors[err.param] = err.msg;
 //     });

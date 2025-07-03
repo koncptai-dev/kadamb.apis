@@ -92,6 +92,8 @@ exports.loginofficeAgent = async (req, res) => {
 };
 
 exports.updateOfficeAgent = async (req, res) => {
+  console.log("update route hit");
+  
   try{
       const { id } = req.params;
       const { fullName, mobileNo, email, parentId, ...otherDetails } = req.body;

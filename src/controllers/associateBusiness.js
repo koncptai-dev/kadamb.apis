@@ -1,54 +1,43 @@
-const { Agent, Allocation } = require("../models");
+const { Allocation, Agent, EMIPayment } = require("../models");
 const { Op } = require("sequelize");
 
 exports.getAssociateBusiness = async (req, res) => {
   try {
-    const parentAgentId = req.query.agentId; // Logged-in agent
-    const { startDate,endDate,downline = "all", businessType, page = 1, pageSize = 10, search = "" } = req.query;
+    const parentAgentId = req.query.agentId;
+    const {
+      startDate,
+      endDate,
+      downline = "direct",
+      businessType,
+      page = 1,
+      pageSize = 10,
+      search = ""
+    } = req.query;
 
     if (!startDate || !endDate) {
       return res.status(400).json({ success: false, message: "startDate & endDate required" });
     }
 
-    // Get relevant agent IDs
+    // Get agent IDs for downline
     let agentIds = [parentAgentId];
-
     if (downline === "direct") {
       const directAgents = await Agent.findAll({
         where: { parentId: parentAgentId },
         attributes: ["id"]
       });
-      const directIds = directAgents.map(agent => agent.id);
-      agentIds=[...directIds];
-
-      console.log("Agent IDs for direct downline:", agentIds);
-    }
-    else if (downline === "all") {
-      // Include nested downline recursively
-      const recursiveFetch = async (ids, acc = []) => {
-        const subs = await Agent.findAll({ where: { parentId: { [Op.in]: ids } }, attributes: ["id"] });
-        const subIds = subs.map(a => a.id).filter(i => !acc.includes(i));
-        console.log("Sub IDs found:", subIds);
-        
-        if (!subIds.length) return acc;
-        acc.push(...subIds);
-        return recursiveFetch(subIds, acc);
-      };
-      agentIds.push(...await recursiveFetch([parentAgentId]));
-      console.log('hi',agentIds.push(...await recursiveFetch([parentAgentId])));
-      
+      agentIds = directAgents.map(a => a.id);
     }
 
-    // Build filters
-    const whereAlloc = {
-      agentId: { [Op.in]: agentIds },
-      allocationDate: { [Op.between]: [startDate, endDate] }
+    const limit = parseInt(pageSize, 10);
+    const offset = (parseInt(page, 10) - 1) * limit;
+
+    // Base allocation filter
+    let whereAlloc = {
+      agentId: { [Op.in]: agentIds }
     };
 
-    console.log("Allocation filters:", whereAlloc);
-    
-    if (businessType) {
-      whereAlloc.paymentType = businessType;
+    if (businessType === "Fresh") {
+      whereAlloc.allocationDate = { [Op.between]: [startDate, endDate] };
     }
 
     if (search) {
@@ -58,51 +47,81 @@ exports.getAssociateBusiness = async (req, res) => {
       ];
     }
 
-    // Pagination options
-    const limit = parseInt(pageSize, 10);
-    const offset = (parseInt(page, 10) - 1) * limit;
+    // Include models
+    const include = [
+      {
+        model: Agent,
+        as: "agent",
+        attributes: ["associateCode"]
+      }
+    ];
 
-    // Fetch paginated results and total count
-    const { count, rows } = await Allocation.findAndCountAll({
-    where: whereAlloc,
-        include: [
-          {
-            model: Agent,
-            as: "agent", // alias must match the one used in associations
-            attributes: ["associateCode"]
-          }
-        ],
-        order: [["allocationDate", "DESC"]],
-        limit,
-        offset});
-const formatDate = (dateStr) => {
-  if (!dateStr) return null;
-  const date = new Date(dateStr);
-  if (isNaN(date)) return null;
-  return date.toLocaleDateString("en-IN"); // Indian format
-};
+    // Include payments (no date filter)
+    include.push({
+      model: EMIPayment,
+      as: "payments",
+      required: businessType === "Renewal" // force at least one EMI for renewals
+    });
 
-    // Map rows to report structure
-    const data = rows.map((row, i) => ({
-  sNo: offset + i + 1,
-  accountNo: row.accountNumber,
-  holderName: row.customerName,
-  associateCode: row.agent?.associateCode || null,
-  payMode: row.paymentMethod,
-  period: row.allocationDate && row.nextDueDate
-    ? `${formatDate(row.allocationDate)} to ${formatDate(row.nextDueDate)}`
-    : null,
-  opDate: formatDate(row.allocationDate),
-  installmentAmt: row.emiMonthly,
-  installmentDate: formatDate(row.nextDueDate),
-  installNo: row.emiDuration,
-  freshBusiness: row.bookingNumber?.startsWith("NEW") ? row.amount : 0,
-  renewal: row.bookingNumber?.startsWith("REN") ? row.amount : 0,
-  netAmount: row.amount
-}));
+    // Fetch records
+    let { count, rows } = await Allocation.findAndCountAll({
+      where: whereAlloc,
+      include,
+      order: [["allocationDate", "DESC"]]
+    });
 
-    console.log(data);
-    
+    // For "Fresh", remove those with EMI payments
+    if (businessType === "Fresh") {
+      rows = rows.filter(row => !row.payments || row.payments.length === 0);
+      count = rows.length;
+    }
+
+    // For "Renewal", keep only those with some payments (already handled by required: true)
+    if (businessType === "Renewal") {
+      rows = rows.filter(row => row.payments && row.payments.length > 0);
+    }
+
+    // Reapply pagination after filtering
+    const paginatedRows = rows.slice(offset, offset + limit);
+
+    // Format date function
+    const formatDate = (dateStr) => {
+      if (!dateStr) return null;
+      const date = new Date(dateStr);
+      if (isNaN(date)) return null;
+      return date.toLocaleDateString("en-IN");
+    };
+
+    // Build final data array
+    const data = paginatedRows.map((row, i) => {
+      const paymentInRange = (row.payments || []).some(p => {
+        const date = new Date(p.paymentDate);
+        return date >= new Date(startDate) && date <= new Date(endDate);
+      });
+
+      const lastPayment = row.payments?.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate))[0];
+
+      return {
+        sNo: offset + i + 1,
+        accountNo: row.accountNumber,
+        holderName: row.customerName,
+        associateCode: row.agent?.associateCode || null,
+        payMode: row.paymentMethod,
+        period: row.allocationDate && row.nextDueDate
+          ? `${formatDate(row.allocationDate)} to ${formatDate(row.nextDueDate)}`
+          : null,
+        opDate: formatDate(row.allocationDate),
+        installmentAmt: row.emiMonthly,
+        installmentDate: formatDate(row.nextDueDate),
+        installNo: row.emiDuration,
+        freshBusiness: businessType === "Fresh" ? row.amount : 0,
+        renewal: businessType === "Renewal" ? row.amount : 0,
+        netAmount: row.amount,
+        paymentInDateRange: paymentInRange,
+        totalEmisPaid: row.payments?.length || 0,
+        lastPaymentDate: formatDate(lastPayment?.paymentDate)
+      };
+    });
 
     const totalAmount = data.reduce((sum, rec) => sum + rec.netAmount, 0);
 
