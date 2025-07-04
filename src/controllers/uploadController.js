@@ -3,6 +3,15 @@ const Upload = require('../models/Upload'); // Import Upload model
 const Agent = require('../models/Agent'); // Import Agent model
 const fs = require('fs');
 
+
+//agent filed 
+  const fieldMap = {
+            photo: 'photoUrl',
+            signature: 'signatureUrl',
+            addressProof: 'addressProofUrl',
+            identityProof: 'identityProofUrl',
+   };
+
 exports.uploadAgentDocument = async (req, res) => {
     const fieldType = req.query.field; // Get the field type from query parameters
 
@@ -40,20 +49,12 @@ exports.uploadAgentDocument = async (req, res) => {
         });
 
         console.log('File saved:', newUpload);
-        
-        //agent filed 
-             const fieldMap = {
-            photo: 'photoUrl',
-            signature: 'signatureUrl',
-            addressProof: 'addressProofUrl',
-            identityProof: 'identityProofUrl',
-        };
+
 
         const agentField = fieldMap[fieldType];
         if (agentField) {
             await agent.update({ [agentField]: filePath });
         }
-
 
         res.status(201).json({
             message: `${fieldType} uploaded successfully`,
@@ -68,7 +69,7 @@ exports.uploadAgentDocument = async (req, res) => {
 };
 
 
-// ✅ **Get all uploaded documents for an agent**
+// **Get all uploaded documents for an agent**
 exports.getAgentDocuments = async (req, res) => {
     try {
         const agentId = req.user.id; // Extract agent ID from token
@@ -81,7 +82,7 @@ exports.getAgentDocuments = async (req, res) => {
     }
 };
 
-// ✅ **Edit (Update) an uploaded document**
+//  **Edit (Update) an uploaded document**
 exports.editAgentDocument = async (req, res) => {
     const documentId = req.params.id;
 
@@ -110,6 +111,14 @@ exports.editAgentDocument = async (req, res) => {
         document.filePath = `/properties/${req.file.filename}`;
         await document.save();
 
+         const agentField = fieldMap[document.fieldType];
+            if (agentField) {
+            await Agent.update(
+                { [agentField]: newFilePath },
+                { where: { id: document.agentId } }
+            );
+            }
+
         res.status(200).json({ message: 'Document updated successfully', updatedDocument: document });
     } catch (error) {
         console.error('Error updating document:', error);
@@ -117,7 +126,7 @@ exports.editAgentDocument = async (req, res) => {
     }
 };
 
-// ✅ **Delete an uploaded document**
+//  **Delete an uploaded document**
 exports.deleteAgentDocument = async (req, res) => {
     const documentId = req.params.id;
 
@@ -136,10 +145,18 @@ exports.deleteAgentDocument = async (req, res) => {
         const filePath = path.join(__dirname, '..', 'uploads', 'properties', path.basename(document.filePath));
         if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath);
-        }
-
+        }console.log('File deleted from storage:', filePath);
+        
         // Delete the database record
         await document.destroy();
+
+        const agentField = fieldMap[document.fieldType];
+            if (agentField) {
+            await Agent.update(
+                { [agentField]: null },
+                { where: { id: document.agentId } }
+            );
+            }
 
         res.status(200).json({ message: 'Document deleted successfully' });
     } catch (error) {
