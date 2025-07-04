@@ -11,7 +11,7 @@ const OfficeAgent = sequelize.define('OfficeAgent', {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: 'OfficeAgents', //  model name (not table name)
+      model: 'officeagents', 
       key: 'id',
     },
   },
