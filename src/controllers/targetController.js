@@ -1,5 +1,5 @@
-const Target = require("../models/Target"); // ✅ Correct model import
-const Agent = require("../models/Agent"); // ✅ Correct model import
+const Target = require("../models/Target"); //  Correct model import
+const Agent = require("../models/Agent"); //  Correct model import
 const AgentCommission = require("../models/AgentCommission");
 const { Op } = require("sequelize");
 
@@ -88,7 +88,7 @@ exports.getTargetReport = async (req, res) => {
         console.log(`team business:`,teamBusiness);
         
         const totalBusiness = (selfBusiness || 0) + (teamBusiness || 0);
-        const remainingBusiness = Math.abs(totalTarget - totalBusiness);
+const remainingBusiness = totalTarget > totalBusiness ? totalTarget - totalBusiness : 0;
 
         // Commission Chart
         const commissionChart = [
@@ -146,7 +146,7 @@ exports.getTargetReport = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("❌ Error in getTargetReport:", error);
+        console.error("Error in getTargetReport:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
 };
