@@ -7,6 +7,7 @@ const moment=require("moment");
 const sequelize = require("../config/database");
 
  // Make an EMI Payment
+ 
  exports.makeEMIPayment = async (req, res) => {
   const transaction = await sequelize.transaction();
   try {
@@ -72,13 +73,19 @@ const sequelize = require("../config/database");
       return res.status(400).json({ error: "All EMIs are already paid." });
     }
 
+ const year = new Date().getFullYear().toString().slice(2);
+const day = String(new Date().getDate()).padStart(2, '0');
+ const dateCode = `${year}${day}`
+ const serialNumber = Math.floor(1000 + Math.random() * 9000);
+ const transactionCode = `TXN-${dateCode}${serialNumber}`; 
+
     const emiPayment = await EMIPayment.create({
       allocationId,
       emiAmountPaid,
       remainingEMIAmount: updatedRemainingEmiAmount,
       totalEMIRemaining: updatedRemainingEmi,
       paymentMode,
-      transactionNumber,
+      transactionNumber:transactionCode,
       status,
       remarks,
       receiptNumber,

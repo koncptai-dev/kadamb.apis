@@ -24,8 +24,6 @@ const getDownlineAgents = async (agentId, visited = new Set()) => {
     return allAgents;
 };
 
-
-
 // Recursive function to get uplines (parents)
 const getUplineAgents = async (agentId, visited = new Set()) => {
     let uplines = [];
@@ -52,9 +50,13 @@ router.get('/BusinessCommission', authenticate, async (req, res) => {
         let agentIds = [loggedInAgentId];
 
         if (downlineType === 'downline') {
-            let downlineAgents = await getDownlineAgents(loggedInAgentId);            
-            let uplines = await getUplineAgents(loggedInAgentId);
-            agentIds = [...agentIds, ...downlineAgents.map(a => a.id), ...uplines.map(a => a.id)];
+            const allDownlines = await getDownlineAgents(loggedInAgentId);
+    const directAgents = await Agent.findAll({ where: { parentId: loggedInAgentId } });
+    const directIds = new Set(directAgents.map(a => a.id));
+    const indirectDownlines = allDownlines.filter(agent => !directIds.has(agent.id));
+    agentIds = indirectDownlines.map(a => a.id);
+    console.log("agentIds", agentIds);
+    
             //  let downlineAgents = await getDownlineAgents(loggedInAgentId);
             //  console.log(downlineAgents);
              
@@ -62,7 +64,7 @@ router.get('/BusinessCommission', authenticate, async (req, res) => {
         } 
         else if (downlineType === 'direct') {
             let directAgents = await Agent.findAll({ where: { parentId: loggedInAgentId } });
-            agentIds = [...agentIds, ...directAgents.map(a => a.id)];
+            agentIds = [ ...directAgents.map(a => a.id)];
         }
         else{
             agentIds=[loggedInAgentId]

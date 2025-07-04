@@ -24,7 +24,10 @@ const CircularRank = sequelize.define('CircularRank', {
     allowNull: false,
     unique: true, //  Ensure level is unique, but NOT primary key
   },
- 
+ month: {
+  type: DataTypes.STRING,
+  allowNull: true,
+}
 }, {
   timestamps: false,
   tableName: 'circular_ranks'

@@ -5,6 +5,9 @@ const sequelize = require('./config/database');
 const app = express();
 const agent =  require('./routes/agentRoutes');
 const uploadRoutes = require('./routes/uploadRoutes'); 
+
+const AgentCircularReward = require('./models/AgentCircularReward'); 
+const CircularRank = require('./models/CircularRank');
 // const Target = require('./models/Agent');
 // const Plot = require('./models/CommissionLevel');
 // const CommissionLevel = require('./models/Plot');
@@ -31,6 +34,8 @@ const officeAgent = require('./routes/officeAgentRoutes'); // Import Office Agen
 const adminapproveRoute = require('./routes/adminapproveRoute'); // Import Admin Approve Routes
 const associateBusinessRoute = require('./routes/associateBussinessRoute'); 
 const CircularRoutes = require('./routes/CircularRoutes'); 
+const associateRoute=require('./routes/associateCommission');
+const CommissionSumaryRoute= require('./routes/agentCommissionSummaryRoute'); //agent commission summary route
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -56,6 +61,8 @@ app.use("/api/walletfund",walletfund);
 app.use("/api/adminapprove", adminapproveRoute); // Use Admin Approve Routes
 app.use("/api", associateBusinessRoute); 
 app.use("/api/circular-rank", CircularRoutes); 
+app.use("/api/associatecommission",associateRoute);
+app.use("/api", CommissionSumaryRoute); 
 
 
 app.use(cors({
@@ -63,7 +70,6 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true // if you're using cookies/sessions
 }));
-  
 
 sequelize.sync({ alter: true }) // ✅ This ensures new models are created
   .then(() => console.log('✅ Database Synced'))

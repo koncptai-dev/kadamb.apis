@@ -4,7 +4,6 @@ const Agent = require('../models/Agent');
 
 
 
-
 exports.approvePendingAllocation = async (req, res) => {
   const { id } = req.params;
 

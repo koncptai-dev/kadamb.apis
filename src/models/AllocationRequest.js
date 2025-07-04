@@ -37,10 +37,12 @@ const Agent = require("./Agent");  // Import the Agent model
     customerAadhar: {
       type: DataTypes.STRING(12),
       allowNull: false,
+      unique:true
     },
     customerPAN: {
       type: DataTypes.STRING(10),
       allowNull: false,
+      unique:true
     },
     nomineeName: DataTypes.STRING,
     nomineeRelation: DataTypes.STRING,
