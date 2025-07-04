@@ -11,14 +11,14 @@ const Agent = sequelize.define('Agent', {
     type: DataTypes.INTEGER,
     allowNull: true, // Root agents will have NULL
     references: {
-      model: 'Agents', // Self-referencing association
+      model: 'agents', // Self-referencing association
       key: 'id',
     },
   },
   commissionLevelId: {
     type: DataTypes.INTEGER,
     references: {
-      model: 'CommissionLevels', // Links to commission table
+      model: 'commissionlevels', // Links to commission table
       key: 'id',
     },
     allowNull: false
