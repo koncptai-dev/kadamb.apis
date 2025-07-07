@@ -71,7 +71,7 @@ const Agent = sequelize.define('Agent', {
   occupation: DataTypes.STRING,
   nomineeName: DataTypes.STRING,
   nomineeRelation: DataTypes.STRING,
-  nomineeAge: DataTypes.INTEGER,
+  nomineeAge: {type:DataTypes.INTEGER,allowNull: true},
  
   resetCode: DataTypes.STRING, // Used for forgot password functionality
   photoUrl: {

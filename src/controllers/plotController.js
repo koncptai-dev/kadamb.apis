@@ -9,7 +9,7 @@ exports.addPlot = async (req, res) => {
   try {
     const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
 
-        const image = `uploads/uploadimagesmap/${req.file.filename}` ;
+const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
     
           if (Number(price) && Number(downPayment) && Number(downPayment) > Number(price)) {
           return res.status(400).json({

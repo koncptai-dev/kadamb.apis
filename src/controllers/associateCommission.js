@@ -25,16 +25,21 @@ exports.getAgentPayouts = async (req, res) => {
 
       const reward = Number(r.CircularRank?.reward_amount || 0);
       const tdsAmount = +(reward * 0.01).toFixed(2);
-      const netIncome = +(reward - tdsAmount).toFixed(2);
- 
+      const ChqAmount= +(reward - tdsAmount).toFixed(2);
+      const CollectionAmount=(reward/0.06).toFixed(2);
+
       return{
       sno: index + 1,
       monthOf: r.CircularRank?.month,
       rankLevel: r.CircularRank?.rank_level,
-      oreIncentive: r.CircularRank?.reward_amount ,
+      oreIncentive: 0.00 ,
+      netIncome: reward,
+      tdsOnAmount:reward,
       tds: tdsAmount,
-      netIncome: netIncome,
-      }
+      welfare:0.00,
+      maturityComm:0,
+      cheqAmount:ChqAmount,
+      collection: CollectionAmount,     }
     });
 
     res.json(formatted);
