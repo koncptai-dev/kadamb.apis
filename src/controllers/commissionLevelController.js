@@ -49,21 +49,42 @@ exports.updateCommissionLevel = async (req, res) => {
     const { id } = req.params;
     const { level, commissionPercentage } = req.body;
 
-    if(commissionPercentage < 0 || commissionPercentage>100){
-      return res.status(400).json({ message: 'Commission percentage cannot be more than 100% or negative' });
-    }
     const commissionLevel = await CommissionLevel.findByPk(id);
-    console.log(commissionLevel);
-    
-    if (!commissionLevel) return res.status(404).json({ message: 'Commission Level not found' });
+    if (!commissionLevel) {
+      return res.status(404).json({ message: 'Commission Level not found' });
+    }
 
-    await commissionLevel.update({ level, commissionPercentage });
-    res.status(200).json({ message: 'Commission Level updated successfully', commissionLevel });
+    // Validate commissionPercentage if provided
+    if (
+      commissionPercentage !== undefined &&
+      (isNaN(commissionPercentage) || commissionPercentage < 0 || commissionPercentage > 100)
+    ) {
+      return res.status(400).json({
+        message: 'Commission percentage must be between 0 and 100',
+      });
+    }
+
+    // Prepare update object dynamically
+    const updateData = {};
+
+    if (level !== undefined) updateData.level = level;
+    if (commissionPercentage !== undefined) updateData.commissionPercentage = commissionPercentage;
+
+    // Perform the update
+    await commissionLevel.update(updateData);
+
+    res.status(200).json({
+      message: 'Commission Level updated successfully',
+      commissionLevel,
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error updating Commission Level', error: error.message });
+    console.error("Error updating commission level:", error);
+    res.status(500).json({
+      message: 'Error updating Commission Level',
+      error: error.message,
+    });
   }
 };
-
 //  Delete a Commission Level
 exports.deleteCommissionLevel = async (req, res) => {
   try {
