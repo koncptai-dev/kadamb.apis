@@ -8,8 +8,7 @@ const { log } = require("console");
 exports.addPlot = async (req, res) => {
   try {
     const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
-
-const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
+    const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
     
           if (Number(price) && Number(downPayment) && Number(downPayment) > Number(price)) {
           return res.status(400).json({
@@ -41,6 +40,9 @@ const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
       }
       
       const yard = area / 9;
+      const validLatitude = latitude !== undefined && latitude !== null && !isNaN(latitude) ? latitude : null;
+      const validLongitude = longitude !== undefined && longitude !== null && !isNaN(longitude) ? longitude : null;
+
       
     const newPlot = await Plot.create({
       projectName,
@@ -55,8 +57,8 @@ const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
       downPayment,
       emiDuration,
       emiAmount,
-      latitude,   
-      longitude, 
+      latitude:validLatitude,   
+      longitude:validLongitude, 
       imageUrl: image,
     });
 
@@ -125,6 +127,8 @@ exports.updatePlot = async (req, res) => {
       if ( emiDuration != null &&  !isNaN(emiDuration) && emiDuration > 0 && price != null && downPayment != null && price > downPayment) {
       emiAmount = (price - downPayment) / emiDuration;
     }
+    const validLatitude = latitude !== undefined && latitude !== null && !isNaN(latitude) ? latitude : null;
+    const validLongitude = longitude !== undefined && longitude !== null && !isNaN(longitude) ? longitude : null;
 
     // Image update
     let image = plot.imageUrl;
@@ -155,8 +159,8 @@ exports.updatePlot = async (req, res) => {
       downPayment,
       emiDuration,
       emiAmount,
-      latitude,
-      longitude,
+      latitude:validLatitude,
+      longitude:validLongitude,
       imageUrl: image
     });
 
