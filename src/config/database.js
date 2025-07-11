@@ -3,7 +3,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 const { Sequelize } = require('sequelize');
 
-// ✅ Create a new Sequelize instance
+// Create a new Sequelize instance
 const sequelize = new Sequelize(
   process.env.DB_NAME, 
   process.env.DB_USER, 
@@ -15,7 +15,7 @@ const sequelize = new Sequelize(
   }
 );
 
-// ✅ Authenticate database connection
+// Authenticate database connection
 sequelize.authenticate()
   .then(() => console.log('✅ Database connected successfully'))
   .catch(err => console.error('❌ Database connection error:', err));

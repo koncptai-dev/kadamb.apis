@@ -18,12 +18,20 @@ const generateAssociateCode = async () => {
 // Register Agent
 exports.createOfficeAgent = async (req, res) => {
   try {
-    const { fullName, mobileNo, password, email, parentId, ...otherDetails } = req.body;
+    const { fullName, mobileNo, password, email, parentId,adharcard, ...otherDetails } = req.body;
     
     // Check if mobile number is already registered
     const existingAgent = await OfficeAgent.findOne({ where: { mobileNo } });
     if (existingAgent) {
       return res.status(400).json({ field: 'mobileNo', message: 'Mobile number already registered' });
+    }
+
+    const adhar=await OfficeAgent.findOne({where:{adharcard}})
+    if(adhar){
+      return res.status(400).json({ field: 'adharcard',
+         message: "Aadhar card already registered",
+         toast: `Agent already registered in "${adhar.branch}" branch`
+         });
     }
 
     // Check if email is already registered
@@ -54,6 +62,7 @@ exports.createOfficeAgent = async (req, res) => {
       fullName,
       mobileNo,
       email,
+      adharcard,
       password: hashedPassword,
       parentId: validatedParentId, // Ensuring it's either a valid ID or NULL
       joiningDate,

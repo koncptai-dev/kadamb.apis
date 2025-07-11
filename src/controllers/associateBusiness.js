@@ -70,13 +70,11 @@ exports.getAssociateBusiness = async (req, res) => {
       order: [["allocationDate", "DESC"]]
     });
 
-    // For "Fresh", remove those with EMI payments
     if (businessType === "Fresh") {
       rows = rows.filter(row => !row.payments || row.payments.length === 0);
       count = rows.length;
     }
 
-    // For "Renewal", keep only those with some payments (already handled by required: true)
     if (businessType === "Renewal") {
       rows = rows.filter(row => row.payments && row.payments.length > 0);
     }

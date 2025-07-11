@@ -1,17 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const plotController = require("../controllers/plotController");
-const upload = require("../middlewares/uploadmiddleware");
 
-router.post("/add", upload.single('file'),plotController.addPlot);
+router.post("/add", plotController.addPlot);
+router.put("/update/:id", plotController.updatePlot);
+router.delete("/delete/:id", plotController.deletePlot);
+
 router.get("/all", plotController.getAllPlots);
-router.put("/update/:id",upload.single('file'), plotController.updatePlot);
-    router.delete("/delete/:id", plotController.deletePlot);
-
 router.get("/available/:projectName", plotController.getAvailablePlotsByProject);
 router.get("/sizes/:projectName", plotController.getAvailablePlotSizesByProject);
 router.get("/find/:projectName/:plotNumber", plotController.getPlotByNumber);
 router.get("/price/:projectName/:plotNumber", plotController.getPlotPrice);
-
 
 module.exports = router;

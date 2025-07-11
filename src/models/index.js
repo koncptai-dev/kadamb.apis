@@ -11,11 +11,16 @@ const Wallet = require("./WalletFundTransfer");
 const AllocationRequest = require("./AllocationRequest");
 const AgentCircularReward = require("./AgentCircularReward");
 const CircularRank = require("./CircularRank");
-
+const OfficeAgent = require("./OfficeAgent");
 
 // Define associations after initializing both models
 Allocation.hasMany(EMIPayment, { foreignKey: "allocationId", as: "payments" });
 EMIPayment.belongsTo(Allocation, { foreignKey: "allocationId", as: "allocation" });
+
+// Add this association
+Agent.belongsTo(OfficeAgent, { foreignKey: "officeId", as: "office" });
+OfficeAgent.hasMany(Agent, { foreignKey: "officeId", as: "agents" });
+
 
 Allocation.belongsTo(Agent, { foreignKey: "agentId", as: "agent" });
 Agent.hasMany(Allocation, { foreignKey: "agentId", as: "allocations" });
