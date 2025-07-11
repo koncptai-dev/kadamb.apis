@@ -45,6 +45,12 @@ const OfficeAgent = sequelize.define('OfficeAgent', {
   address: {type:DataTypes.TEXT,allowNull:false},
   pinNo: {type:DataTypes.STRING,allowNull:false},
   resetCode: DataTypes.STRING,
+  branch:DataTypes.STRING,
+  adharcard: {
+    type:DataTypes.STRING(12),
+    allowNull: false,
+  },
+  
 }, {
   tableName: 'officeagents',   //  ensure correct table mapping
   timestamps: true,

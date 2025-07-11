@@ -2,12 +2,12 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const Agent = require('../models/Agent');
-const commissionLevel = require('../models/CommissionLevel'); 
+const commissionLevel = require('../models/CommissionLevel');
+const OfficeAgent = require('../models/OfficeAgent');
 require('dotenv').config();
 const { sendResetEmail, sendCredentialsEmail } = require('../utils/emailService'); // Utility for sending emails
 
 // Generate Random Associate Code
-// const generateAssociateCode = () => `AGENT${Date.now()}`;
 
 const generateAssociateCode = async () => {
   const lastAgent = await Agent.findOne({
@@ -21,12 +21,29 @@ const generateAssociateCode = async () => {
 exports.registerAgent = async (req, res) => {
   try {
     const { fullName, mobileNo, password, email, parentId, commissionLevelId, ...otherDetails } = req.body;
-    
+    let agentCode = null;
+    let officeId = null;
+
+    if (req.user?.associateCode?.startsWith('OFFICE')) {
+      officeId = req.user.id;
+      const officeAgent = await OfficeAgent.findByPk(officeId);
+
+      if (!officeAgent) {
+        return res.status(400).json({ message: 'OfficeAgent not found' });
+      }
+
+      const officeCode = officeAgent.associateCode.replace('OFFICE', '').padStart(4, '0');
+
+      const agentCount = await Agent.count({ where: { officeId } });
+      const paddedAgentNumber = String(agentCount + 1).padStart(3, '0'); // e.g. 001
+      agentCode = `${officeCode}1${paddedAgentNumber}`; 
+
+    }
+      
     // Validate commissionLevelId presence
     if (!commissionLevelId) {
       return res.status(400).json({ field:"commissionLevelId",message: 'Commission level ID is required' });
     }
-
     // Check if commissionLevelId exists in DB
     const commissionLevelRecord = await commissionLevel.findByPk(commissionLevelId);
     if (!commissionLevelRecord) {
@@ -60,6 +77,8 @@ exports.registerAgent = async (req, res) => {
     // Create new agent
     const newAgent = await Agent.create({
       associateCode,
+      agentCode,
+      officeId,
       fullName,
       mobileNo,
       email,
@@ -70,6 +89,8 @@ exports.registerAgent = async (req, res) => {
       ...otherDetails,
     });
 
+    
+
     await sendCredentialsEmail(email, associateCode, password);
 
     return res.status(201).json({ message: 'Agent registered successfully. Credentials sent to email.', agent: newAgent });
@@ -77,7 +98,6 @@ exports.registerAgent = async (req, res) => {
     return res.status(500).json({ message: 'Error registering agent', error: error.message });
   }
 };
-
 
 // Login Agent
 exports.loginAgent = async (req, res) => {

@@ -7,8 +7,8 @@ const { log } = require("console");
 // Add a new plot
 exports.addPlot = async (req, res) => {
   try {
-    const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null,latitude, longitude  } = req.body;
-    const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
+    const { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null } = req.body;
+    // const image = req.file ? `uploads/uploadimagesmap/${req.file.filename}` : null;
     
           if (Number(price) && Number(downPayment) && Number(downPayment) > Number(price)) {
           return res.status(400).json({
@@ -40,9 +40,7 @@ exports.addPlot = async (req, res) => {
       }
       
       const yard = area / 9;
-      const validLatitude = latitude !== undefined && latitude !== null && !isNaN(latitude) ? latitude : null;
-      const validLongitude = longitude !== undefined && longitude !== null && !isNaN(longitude) ? longitude : null;
-
+     
       
     const newPlot = await Plot.create({
       projectName,
@@ -57,9 +55,7 @@ exports.addPlot = async (req, res) => {
       downPayment,
       emiDuration,
       emiAmount,
-      latitude:validLatitude,   
-      longitude:validLongitude, 
-      imageUrl: image,
+      
     });
 
     res.status(201).json({ success: true, message: "Plot added successfully", plot: newPlot });
@@ -92,7 +88,7 @@ exports.getAllPlots = async (req, res) => {
 exports.updatePlot = async (req, res) => {
   try {
     const { id } = req.params;
-    let { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null, latitude, longitude } = req.body;
+    let { projectName, plotSize, plotNumber, position, status, price, downPayment = 0, emiDuration = null } = req.body;
 
     const plot = await Plot.findByPk(id);
     if (!plot) {
@@ -127,23 +123,7 @@ exports.updatePlot = async (req, res) => {
       if ( emiDuration != null &&  !isNaN(emiDuration) && emiDuration > 0 && price != null && downPayment != null && price > downPayment) {
       emiAmount = (price - downPayment) / emiDuration;
     }
-    const validLatitude = latitude !== undefined && latitude !== null && !isNaN(latitude) ? latitude : null;
-    const validLongitude = longitude !== undefined && longitude !== null && !isNaN(longitude) ? longitude : null;
-
-    // Image update
-    let image = plot.imageUrl;
-    if (req.file?.filename) {
-      const newImagePath = `uploads/uploadimagesmap/${req.file.filename}`;
-      const absoluteOldPath = path.resolve(plot.imageUrl || "");
-      if (plot.imageUrl && fs.existsSync(absoluteOldPath) && plot.imageUrl !== newImagePath) {
-        try {
-          fs.unlinkSync(absoluteOldPath);
-        } catch (err) {
-          console.error("Failed to delete old image:", err.message);
-        }
-      }
-      image = newImagePath;
-    }
+   
 
     // Perform update
     await plot.update({
@@ -159,9 +139,7 @@ exports.updatePlot = async (req, res) => {
       downPayment,
       emiDuration,
       emiAmount,
-      latitude:validLatitude,
-      longitude:validLongitude,
-      imageUrl: image
+     
     });
 
     res.status(200).json({ success: true, message: "Plot updated successfully", plot });

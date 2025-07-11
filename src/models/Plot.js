@@ -59,20 +59,19 @@ const Plot = sequelize.define("Plot", {
     type: DataTypes.FLOAT,
     allowNull: true,
   },
-  latitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
+  // latitude: {
+  //   type: DataTypes.FLOAT,
+  //   allowNull: true,
    
-  },
-  longitude: {
-    type: DataTypes.FLOAT,
-    allowNull: true,
-   
-  },
-  imageUrl: {
-    type: DataTypes.STRING,
-    allowNull: true,
-  },
+  // },
+  // longitude: {
+  //   type: DataTypes.TEXT,
+  //   allowNull: true,
+  // },
+  // imageUrl: {
+  //   type: DataTypes.TEXT,
+  //   allowNull: true,
+  // },
 }, {
   timestamps: false,
   tableName: "plots",

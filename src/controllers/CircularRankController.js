@@ -40,8 +40,17 @@ exports.updateCircularRank = async (req, res) => {
       return res.status(404).json({ message: 'Circular Rank not found' });
     }
        
+    const existRank = await CircularRank.findOne({
+      where: {
+        rank_level,
+        id: { [Op.ne]: id } 
+      }
+    });
+    if (existRank) {
+      return res.status(400).json({ message: 'Rank Level already exists' });
+    }
     await CircularRank.update(
-      { name, target_amount, reward_amount,month },
+      { name, target_amount, reward_amount,month, rank_level },
       { where: { id } }
     );
 

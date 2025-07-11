@@ -3,7 +3,6 @@ const router = express.Router();
 const OfficeAgentController = require('../controllers/officeAgentController');
 const {validateOfficeAgentSignup}=require('../middlewares/validation');
 const { validationResult } = require('express-validator');  
-// const authenticateToken =  require('../middlewares/auth');
 
 const handleValidation = (req, res, next) => {
   const errors = validationResult(req);

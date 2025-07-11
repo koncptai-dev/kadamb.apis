@@ -36,6 +36,7 @@ const associateBusinessRoute = require('./routes/associateBussinessRoute');
 const CircularRoutes = require('./routes/CircularRoutes'); 
 const associateRoute=require('./routes/associateCommission');
 const CommissionSumaryRoute= require('./routes/agentCommissionSummaryRoute'); //agent commission summary route
+const OfficeWalletTransfer=require('./routes/OfficeWalletTransferRoute'); 
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -63,10 +64,10 @@ app.use("/api", associateBusinessRoute);
 app.use("/api/circular-rank", CircularRoutes); 
 app.use("/api/associatecommission",associateRoute);
 app.use("/api", CommissionSumaryRoute); 
-
+app.use("/api/officewallet", OfficeWalletTransfer); 
 
 app.use(cors({
-    origin: 'https://kadamprojects.com/', // Allow only your frontend's IP
+    origin: 'https://kadamprojects.com/'||'http://localhost:5173', // Allow only your frontend's IP
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true // if you're using cookies/sessions
 }));

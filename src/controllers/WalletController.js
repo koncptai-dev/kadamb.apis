@@ -1,12 +1,10 @@
 const walletTransfer=require('../models/WalletFundTransfer');
 const AgentCommission = require('../models/AgentCommission');
 const Agent = require('../models/Agent');
+const OfficeAgent = require('../models/OfficeAgent');
 
 require('dotenv').config();
 
-
-
-//create wallet fund
 
 // transferWallet
 exports.transferWallet = async (req, res) => {
@@ -74,7 +72,6 @@ exports.transferWallet = async (req, res) => {
 exports.getBalance= async (req, res) => {
     try{
         const{ agentId } = req.params;
-        console.log(agentId);
         
         const agentCommission = await AgentCommission.findOne({ where: { agentId } });
         // console.log(agentCommission);
@@ -86,7 +83,7 @@ exports.getBalance= async (req, res) => {
         console.log(balance);
           
         return res.status(200).json({balance});
-    }catch(error){
+        }catch(error){
         console.error('Error fetching wallet balance:', error);
         return res.status(500).json({ message: 'Failed to fetch wallet balance', error });
     }

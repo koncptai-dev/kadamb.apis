@@ -90,7 +90,18 @@ identityProofUrl: {
   type: DataTypes.STRING,
   allowNull: true,
 },
-
+agentCode:{
+  type:DataTypes.STRING,
+  allowNull:true
+},
+ officeId: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'officeagents',
+        key: 'id',
+      },
+    },
 }, {
   timestamps: true,
   tableName: 'agents', 
