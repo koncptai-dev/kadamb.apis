@@ -108,7 +108,8 @@ exports.editAgentDocument = async (req, res) => {
         }
 
         // Update with new file path
-        document.filePath = `/properties/${req.file.filename}`;
+        const newFilePath = `/uploads/properties/${req.file.filename}`;
+        document.filePath = newFilePath;
         await document.save();
 
          const agentField = fieldMap[document.fieldType];
