@@ -26,6 +26,8 @@ exports.allocatePlot = async (req, res) => {
 
     if (emiDuration && amount && amount > 0) {
       const principal = amount - downPayment;
+      console.log("Principal Amount:", principal);
+      
       emiMonthly = parseFloat((principal / emiDuration).toFixed(2));
       emiEndDate = moment(emiStartDate).add(emiDuration, "months").format("YYYY-MM-DD");
     }
