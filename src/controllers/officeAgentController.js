@@ -118,7 +118,8 @@ exports.updateOfficeAgent = async (req, res) => {
         ...otherDetails,
       })
           res.status(200).json({ message: 'Agent updated successfully', agent });
-  }catch{
+  }catch(error){
+      console.error("Error updating agent:", error);
     res.status(500).json({ message: 'Error updating agent', error: error.message });
   }
 }

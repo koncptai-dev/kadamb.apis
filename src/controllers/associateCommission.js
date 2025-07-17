@@ -1,10 +1,9 @@
-const { Allocation, EMIPayment, Agent, AgentCommissionTracker } = require("../models");
+const { Allocation, EMIPayment, Agent } = require("../models");
 const moment = require("moment");
 const AgentCircularReward = require("../models/AgentCircularReward");
 const CircularRank = require("../models/CircularRank");
 
 exports.getAgentPayouts = async (req, res) => {
-
   const agentId = req.user.id;
   const { payoutNo } = req.query;
 
@@ -17,34 +16,68 @@ exports.getAgentPayouts = async (req, res) => {
         agentId: agent.id,
         ...(payoutNo ? { payoutNumber: payoutNo } : {})
       },
-      include: [{ model: CircularRank,  as: "CircularRank" }],
+      include: [{ model: CircularRank, as: "CircularRank" }],
       order: [["createdAt", "DESC"]],
     });
 
-    const formatted = rewards.map((r, index) => {
+    const allocations = await Allocation.findAll({
+      where: { agentId: agent.id },
+      attributes: ["id"]
+    });
 
+    const allocationIds = allocations.map(a => a.id);
+
+    const payments = await EMIPayment.findAll({
+      where: {
+        allocationId: allocationIds,
+        status: "Completed"
+      },
+      attributes: ["emiAmountPaid", "paymentDate"]
+    });
+
+    const emiMapByMonth = {};
+    for (let payment of payments) {
+      const month = moment(payment.paymentDate).format("YYYY-MM");
+      if (!emiMapByMonth[month]) emiMapByMonth[month] = [];
+      emiMapByMonth[month].push({
+        emiAmountPaid: parseFloat(payment.emiAmountPaid || 0),
+        paymentDate: payment.paymentDate
+      });
+    }
+
+    const formatted = rewards.map((r, index) => {
       const reward = Number(r.CircularRank?.reward_amount || 0);
       const tdsAmount = +(reward * 0.01).toFixed(2);
-      const ChqAmount= +(reward - tdsAmount).toFixed(2);
-      const CollectionAmount=(reward/0.06).toFixed(2);
+      const ChqAmount = +(reward - tdsAmount).toFixed(2);
 
-      return{
-      sno: index + 1,
-      monthOf: r.CircularRank?.month,
-      rankLevel: r.CircularRank?.rank_level,
-      oreIncentive: 0.00 ,
-      netIncome: reward,
-      tdsOnAmount:reward,
-      tds: tdsAmount,
-      welfare:0.00,
-      maturityComm:0,
-      cheqAmount:ChqAmount,
-      collection: CollectionAmount,     }
+      const monthKey = moment(r.CircularRank?.month).format("YYYY-MM");
+      const emiPayments = emiMapByMonth[monthKey] || [];
+      const collection = emiPayments.reduce((acc, p) => acc + p.emiAmountPaid, 0);
+
+      const earningPercentage = 6; // or dynamic if needed
+      const totalEarning = +((collection * earningPercentage) / 100).toFixed(2);
+console.log(totalEarning);
+
+      return {
+        sno: index + 1,
+        monthOf: r.CircularRank?.month,
+        rankLevel: r.CircularRank?.rank_level,
+        oreIncentive: 0.00,
+        netIncome: reward,
+        tdsOnAmount: reward,
+        tds: tdsAmount,
+        welfare: 0.00,
+        maturityComm: 0,
+        cheqAmount: ChqAmount,
+        collection: +collection.toFixed(2),
+        totalEarning,
+        emiPayments // send full EMI breakdown report  to frontend
+      };
     });
 
     res.json(formatted);
   } catch (error) {
-    console.error("Error in getAssociateCircularCommission:", error);
+    console.error("Error in getAgentPayouts:", error);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
