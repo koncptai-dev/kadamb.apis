@@ -19,7 +19,6 @@ exports.allocatePlot = async (req, res) => {
     if (existingRequestAdhar) {
       return res.status(400).json({ error: "Customer AdharCard is already there" });}
 
-
     // Proceed with EMI calculations
 
      emiDuration = emiDuration ? parseInt(emiDuration) : null;

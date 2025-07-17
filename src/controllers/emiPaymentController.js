@@ -108,7 +108,7 @@ const day = String(new Date().getDate()).padStart(2, '0');
     // Fetch the first agent linked to the allocation
  let agent = await Agent.findByPk(allocation.agentId, { transaction });
 
-console.log("➡️ allocation.agentId =", allocation.agentId);
+console.log(" allocation.agentId =", allocation.agentId);
 
 if (!agent) {
   await transaction.rollback();
