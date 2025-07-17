@@ -67,7 +67,7 @@ app.use("/api", CommissionSumaryRoute);
 app.use("/api/officewallet", OfficeWalletTransfer); 
 
 app.use(cors({
-    origin: 'https://kadamprojects.com/'||'http://localhost:5173', // Allow only your frontend's IP
+    origin: 'https://kadamprojects.com/', // Allow only your frontend's IP
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials: true // if you're using cookies/sessions
 }));
