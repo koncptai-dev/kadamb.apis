@@ -14,10 +14,10 @@ exports.allocatePlot = async (req, res) => {
     }
      const existingRequest = await AllocationRequest.findOne({ where: {customerPAN}})
     if (existingRequest) {
-      return res.status(400).json({ error: "Customer PanCard is already there" });}
+      return res.status(400).json({ field: 'customerPAN',error: "Customer PanCard is already there" });}
      const existingRequestAdhar = await AllocationRequest.findOne({ where: {customerAadhar}})
     if (existingRequestAdhar) {
-      return res.status(400).json({ error: "Customer AdharCard is already there" });}
+      return res.status(400).json({ field: 'customerAadhar',error: "Customer AdharCard is already there" });}
 
     // Proceed with EMI calculations
 
