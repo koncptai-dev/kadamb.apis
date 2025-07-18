@@ -92,7 +92,7 @@ const Agent = require("./Agent");  // Import the Agent model
       allowNull: true,
     },
     downPayment: {
-      type: DataTypes.TEXT,
+      type: DataTypes.FLOAT,
       allowNull: true,
     },
     emiStartDate: {

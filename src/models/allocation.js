@@ -93,7 +93,7 @@ const Allocation = sequelize.define("Allocation", {
     allowNull: true,
   },
    downPayment:{
-      type:DataTypes.TEXT,
+      type:DataTypes.FLOAT,
       allowNull:true,
     },
   emiStartDate: {
