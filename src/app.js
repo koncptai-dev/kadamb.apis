@@ -73,7 +73,7 @@ app.use(cors({
 }));
 
 sequelize.sync({ alter: true }) // ✅ This ensures new models are created
-  .then(() => console.log('✅ Database Synced'))
+  .then(() => console.log('✅Database Synced'))
   .catch((err) => console.log('❌ Sync Error:', err));
 
 module.exports = app;
