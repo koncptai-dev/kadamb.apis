@@ -11,6 +11,9 @@ exports.getAgentPayouts = async (req, res) => {
     const agent = await Agent.findByPk(agentId);
     if (!agent) return res.status(404).json({ message: "Agent not found" });
 
+    const earningPercentage = Number(agent.commissionPercentage) || 0;
+console.log(`Earning Percentage: ${earningPercentage}%`);
+
     const rewards = await AgentCircularReward.findAll({
       where: {
         agentId: agent.id,
@@ -41,7 +44,8 @@ exports.getAgentPayouts = async (req, res) => {
       if (!emiMapByMonth[month]) emiMapByMonth[month] = [];
       emiMapByMonth[month].push({
         emiAmountPaid: parseFloat(payment.emiAmountPaid || 0),
-        paymentDate: payment.paymentDate
+        paymentDate: payment.paymentDate,
+        
       });
     }
 
@@ -54,7 +58,6 @@ exports.getAgentPayouts = async (req, res) => {
       const emiPayments = emiMapByMonth[monthKey] || [];
       const collection = emiPayments.reduce((acc, p) => acc + p.emiAmountPaid, 0);
 
-      const earningPercentage = 6; // or dynamic if needed
       const totalEarning = +((collection * earningPercentage) / 100).toFixed(2);
 console.log(totalEarning);
 
@@ -71,7 +74,8 @@ console.log(totalEarning);
         cheqAmount: ChqAmount,
         collection: +collection.toFixed(2),
         totalEarning,
-        emiPayments // send full EMI breakdown report  to frontend
+        emiPayments,
+        earningPercentage // send full EMI breakdown report  to frontend
       };
     });
 
