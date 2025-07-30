@@ -12,6 +12,7 @@ const AllocationRequest = require("./AllocationRequest");
 const AgentCircularReward = require("./AgentCircularReward");
 const CircularRank = require("./CircularRank");
 const OfficeAgent = require("./OfficeAgent");
+// const CommissionChart = require('./CommissionChart');
 
 // Define associations after initializing both models
 Allocation.hasMany(EMIPayment, { foreignKey: "allocationId", as: "payments" });
@@ -44,6 +45,9 @@ AllocationRequest.belongsTo(Agent, { foreignKey: "agentId", as: "agent" });
 AgentCircularReward.belongsTo(CircularRank, {foreignKey: "circularId", as: "CircularRank"});
 CircularRank.hasMany(AgentCircularReward, {foreignKey: "circularId",as: "rewards"});
 
+// CommissionChart.hasMany(AgentCommissionTracker, { foreignKey: 'chartId', as: 'trackers' });
+// AgentCommissionTracker.belongsTo(CommissionChart, { foreignKey: 'chartId', as: 'chart' });
+
 module.exports = {
     sequelize,
     Allocation,
@@ -56,6 +60,7 @@ module.exports = {
     Wallet,
     AllocationRequest,
     AgentCircularReward,
-    CircularRank
+    CircularRank,
+    // CommissionChart
   };
   

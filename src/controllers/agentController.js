@@ -136,19 +136,31 @@ exports.editAgent = async (req, res) => {
     if (!existingAgent) {
       return res.status(404).json({ message: 'Agent not found' });
     }
-      if (updates.commissionLevelId) {
-      const level = await commissionLevel.findByPk(updates.commissionLevelId);
-      if (!level) {
-        return res.status(400).json({ message: 'Invalid commission level ID' });
-      }
-      updates.commissionPercentage = level.commissionPercentage;
+
+    if (updates.commissionLevelId) {
+    const level = await commissionLevel.findByPk(updates.commissionLevelId);
+    if (!level) {
+      return res.status(400).json({ message: 'Invalid commission level ID' });
     }
 
-    Object.keys(updates).forEach((key) => {
-      if (updates[key] !== null && updates[key] !== undefined && updates[key] !== '') {
-        existingAgent[key] = updates[key];
-      }
-    });
+   
+    if (level.commissionPercentage < existingAgent.commissionPercentage) {
+      return res.status(400).json({ 
+        field: "commissionPercentage",
+        message: `Cannot update. Current percentage is higher.`
+      });
+    }
+
+    updates.commissionPercentage = level.commissionPercentage;
+    delete updates.commissionLevelId;
+  }
+
+  Object.keys(updates).forEach((key) => {
+    if (updates[key] !== null && updates[key] !== undefined && updates[key] !== '') {
+      existingAgent[key] = updates[key];
+    }
+  });
+
 
     await existingAgent.save();
     res.status(200).json({ message: 'Agent updated successfully', agent: existingAgent });
