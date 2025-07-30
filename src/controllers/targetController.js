@@ -1,6 +1,7 @@
 const Target = require("../models/Target"); //  Correct model import
 const Agent = require("../models/Agent"); //  Correct model import
 const AgentCommission = require("../models/AgentCommission");
+
 const { Op } = require("sequelize");
 
 // Create target
@@ -88,50 +89,52 @@ exports.getTargetReport = async (req, res) => {
         console.log(`team business:`,teamBusiness);
         
         const totalBusiness = (selfBusiness || 0) + (teamBusiness || 0);
-const remainingBusiness = totalTarget > totalBusiness ? totalTarget - totalBusiness : 0;
+        const remainingBusiness = totalTarget > totalBusiness ? totalTarget - totalBusiness : 0;
 
         // Commission Chart
-        const commissionChart = [
-            { rank: 1, target: 100000, commission: 6 },
-            { rank: 2, target: 300000, commission: 7 },
-            { rank: 3, target: 1000000, commission: 8 },
-            { rank: 4, target: 2500000, commission: 10 },
-            { rank: 5, target: 6000000, commission: 12 },
-            { rank: 6, target: 9000000, commission: 14 },
-            { rank: 7, target: 13000000, commission: 15 },
-            { rank: 8, target: 17000000, commission: 16 },
-            { rank: 9, target: 21000000, commission: 17 },
-            { rank: 10, target: 26000000, commission: 18 },
-            { rank: 11, target: 30000000, commission: 19 },
-            { rank: 12, target: 40000000, commission: 20 },
-            { rank: 13, target: 50000000, commission: 21 },
-            { rank: 14, target: 60000000, commission: 22 },
-        ];
+        // const commissionChart = [
+            
+        //     { rank: 0, target: 1000, commission: 11 },
+        //     { rank: 1, target: 100000, commission: 6 },
+        //     { rank: 2, target: 300000, commission: 7 },
+        //     { rank: 3, target: 1000000, commission: 8 },
+        //     { rank: 4, target: 2500000, commission: 10 },
+        //     { rank: 5, target: 6000000, commission: 12 },
+        //     { rank: 6, target: 9000000, commission: 14 },
+        //     { rank: 7, target: 13000000, commission: 15 },
+        //     { rank: 8, target: 17000000, commission: 16 },
+        //     { rank: 9, target: 21000000, commission: 17 },
+        //     { rank: 10, target: 26000000, commission: 18 },
+        //     { rank: 11, target: 30000000, commission: 19 },
+        //     { rank: 12, target: 40000000, commission: 20 },
+        //     { rank: 13, target: 50000000, commission: 21 },
+        //     { rank: 14, target: 60000000, commission: 22 },
+        // ];
 
-        const getCommissionByBusinessAmount = (amount) => {
-            let commission = 0;
-            for (let i = 0; i < commissionChart.length; i++) {
-                if (amount >= commissionChart[i].target) {
-                    commission = commissionChart[i].commission;
-                } else {
-                    break;
-                }
-            }
-            return commission;
-        };
+        // const getCommissionByBusinessAmount = (amount) => {
+        //     let commission = 0;
+        //     for (let i = 0; i < commissionChart.length; i++) {
+        //         if (amount >= commissionChart[i].target) {
+        //             commission = commissionChart[i].commission;
+        //         } else {
+        //             break;
+        //         }
+        //     }
+        //     return commission;
+        // };
 
-        const newCommissionPercent = getCommissionByBusinessAmount(selfBusiness || 0); //  use only self business
-        const agent = await Agent.findByPk(agentId);
-        if (agent) {
-            const currentCommission = parseFloat(agent.commissionPercentage) || 0;
+        // const newCommissionPercent = getCommissionByBusinessAmount(selfBusiness || 0); //  use only self business
+        // const agent = await Agent.findByPk(agentId);
+        // if (agent) {
+        //     const currentCommission = parseFloat(agent.commissionPercentage) || 0;
 
-            if (currentCommission < newCommissionPercent) {
-                await agent.update({ commissionPercentage: newCommissionPercent });
-                await agent.reload();
-            } else {
-                console.log(`ℹ No update needed. Current commission is already ${currentCommission}%`);
-            }
-        }
+        //     if (currentCommission < newCommissionPercent) {
+        //         await agent.update({ commissionPercentage: newCommissionPercent });
+        //         await agent.reload();
+        //     } else {
+        //         console.log(`ℹ No update needed. Current commission is already ${currentCommission}%`);
+        //     }
+        // }
 
         res.json({
             agentId,
@@ -142,7 +145,7 @@ const remainingBusiness = totalTarget > totalBusiness ? totalTarget - totalBusin
             teamBusiness: teamBusiness || 0,
             totalBusiness,
             remainingBusiness,
-            updatedCommissionPercent: newCommissionPercent
+            // updatedCommissionPercent: newCommissionPercent
         });
 
     } catch (error) {

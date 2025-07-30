@@ -8,7 +8,6 @@ const uploadDir = path.join(__dirname,'..','uploads', 'uploadimagesmap');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log(`Upload directory created at: ${uploadDir}`);
-  
 }
 
 // Configure storage
@@ -16,7 +15,6 @@ const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadDir); // Store images in 'uploads/properties/' folder
     console.log(`File will be stored in: ${uploadDir}`);
-    
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);

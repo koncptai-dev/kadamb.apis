@@ -8,7 +8,7 @@ exports.getAgentCommissions = async (req, res) => {
       include: [
         {
           model: Agent,
-          as: "agent", // ✅ Add alias
+          as: "agent", // Add alias
           attributes: ["fullname"],
           required: true,
         },
@@ -34,13 +34,13 @@ exports.getCommissionHistory = async (req, res) => {
       include: [
         {
           model: Agent,
-          as: "agent", // ✅ Add alias
+          as: "agent", // Add alias
           attributes: ["fullname"],
           required: true,
         },
         {
           model: Allocation,
-          as: "allocation", // ✅ Add alias
+          as: "allocation", //  Add alias
           attributes: ["projectName", "plotSize", "plotNumber"],
           required: true,
         },

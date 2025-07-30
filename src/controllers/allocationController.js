@@ -3,6 +3,7 @@ const EMIPayment = require('../models/emipayment');
 const AllocationRequest=require('../models/AllocationRequest');
 const Agent = require('../models/Agent');
 const moment = require('moment'); // install if not already: npm install moment
+const {Op}=require('sequelize');
 
 // AllocationRequest a plot to a customer
 exports.allocatePlot = async (req, res) => {
@@ -115,11 +116,13 @@ exports.getAllocationById = async (req, res) => {
 exports.updateAllocation = async (req, res) => {
     try {
         const { id } = req.params;
-        const {
+        let {
             amount,
             downPayment,
             emiDuration,
-            emiStartDate
+            emiStartDate,
+            customerPAN,
+            customerAadhar 
         } = req.body;
 
         const allocation = await AllocationRequest.findByPk(id);
@@ -127,29 +130,41 @@ exports.updateAllocation = async (req, res) => {
         if (!allocation) {
             return res.status(404).json({ error: "Allocation not found" });
         }
-             const existingRequest = await AllocationRequest.findOne({ where: {customerPAN}})
+             const existingRequest = await AllocationRequest.findOne({ where: {customerPAN,id: { [Op.ne]: id }}})
               if (existingRequest) {
                 return res.status(400).json({ error: "Customer PanCard is already there" });}
-              const existingRequestAdhar = await AllocationRequest.findOne({ where: {customerAadhar}})
+              const existingRequestAdhar = await AllocationRequest.findOne({ where: {customerAadhar,id: { [Op.ne]: id }}})
               if (existingRequestAdhar) {
                 return res.status(400).json({ error: "Customer AdharCard is already there" });}
 
-        let emiMonthly = allocation.emiMonthly;  
-        let emiEndDate = allocation.emiEndDate;  
+        emiDuration = emiDuration ? parseInt(emiDuration) : null;
+    downPayment = downPayment ? parseFloat(downPayment) : 0;
+    amount = amount ? parseFloat(amount) : 0;
+    emiStartDate =
+      emiStartDate && emiStartDate !== "Invalid date"
+        ? moment(emiStartDate).format("YYYY-MM-DD")
+        : null;
 
-        if (emiDuration && amount && amount > 0) {
-            const principal = amount - downPayment;
-            emiMonthly = principal / emiDuration;
-            emiMonthly = parseFloat(emiMonthly.toFixed(2)); // 2 decimal places
+    let emiMonthly = 0;
+    let emiEndDate = emiStartDate;
 
-            emiEndDate = moment(emiStartDate).add(emiDuration, 'months').format('YYYY-MM-DD');
-        }
+     if (emiDuration && amount > 0) {
+      const principal = amount - downPayment;
+      emiMonthly = parseFloat((principal / emiDuration).toFixed(2));
+      emiEndDate = emiStartDate
+        ? moment(emiStartDate).add(emiDuration, "months").format("YYYY-MM-DD")
+        : null;
+    }console.log(emiMonthly,emiEndDate,emiDuration,downPayment,emiStartDate);
+    
 
         // Update allocation with the new EMI details
         await allocation.update({
             ...req.body,  
-            emiMonthly,  
-            emiEndDate    
+           emiMonthly,
+          emiEndDate,
+          emiDuration,
+          downPayment,
+          emiStartDate,  
         });
 
         return res.status(200).json({

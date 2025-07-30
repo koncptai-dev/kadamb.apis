@@ -37,6 +37,7 @@ const CircularRoutes = require('./routes/CircularRoutes');
 const associateRoute=require('./routes/associateCommission');
 const CommissionSumaryRoute= require('./routes/agentCommissionSummaryRoute'); //agent commission summary route
 const OfficeWalletTransfer=require('./routes/OfficeWalletTransferRoute'); 
+const CommissionChart = require('./routes/CommissionRoute');
 
 app.use(cors());
 app.use(bodyParser.json());
@@ -65,6 +66,7 @@ app.use("/api/circular-rank", CircularRoutes);
 app.use("/api/associatecommission",associateRoute);
 app.use("/api", CommissionSumaryRoute); 
 app.use("/api/officewallet", OfficeWalletTransfer); 
+app.use("/api/commission-chart", CommissionChart); 
 
 app.use(cors({
     origin: 'https://kadamprojects.com/', // Allow only your frontend's IP
@@ -73,7 +75,7 @@ app.use(cors({
 }));
 
 sequelize.sync({ alter: true }) // ✅ This ensures new models are created
-  .then(() => console.log('✅ Database Synced'))
+  .then(() => console.log('✅Database Synced'))
   .catch((err) => console.log('❌ Sync Error:', err));
 
 module.exports = app;
