@@ -142,7 +142,15 @@ exports.getPendingWalletRequests = async (req, res) => {
   try {
     const requests = await walletTransfer.findAll({
       where: { status: 'Pending' },
+      include:[
+        {
+          model: Agent,
+          as: 'agent',
+          attributes:['associateCode']
+        }
+      ]
     });
+console.log(requests);
 
     res.status(200).json(requests);
   } catch (error) {

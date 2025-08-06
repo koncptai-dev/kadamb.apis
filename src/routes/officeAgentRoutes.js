@@ -3,6 +3,7 @@ const router = express.Router();
 const OfficeAgentController = require('../controllers/officeAgentController');
 const {validateOfficeAgentSignup}=require('../middlewares/validation');
 const { validationResult } = require('express-validator');  
+const authenticateToken =  require('../middlewares/auth');
 
 const handleValidation = (req, res, next) => {
   const errors = validationResult(req);
@@ -20,5 +21,8 @@ router.post('/register',validateOfficeAgentSignup,handleValidation, OfficeAgentC
 router.get('/all-agents', OfficeAgentController.getAgents);
 router.post('/login', OfficeAgentController.loginofficeAgent);
 router.put('/edit/:id', OfficeAgentController.updateOfficeAgent);
+router.post('/change-password', authenticateToken, OfficeAgentController.changePassword);
+router.post('/forgot-password', OfficeAgentController.sendResetCode);
+router.post('/reset-password', OfficeAgentController.resetPassword);
 
 module.exports = router;

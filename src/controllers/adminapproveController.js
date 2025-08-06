@@ -1,21 +1,33 @@
 const Allocation = require('../models/allocation');
 const AllocationRequest=require('../models/AllocationRequest');
 const Agent = require('../models/Agent');
-
+const { Op } = require("sequelize");
+const plot=require('../models/Plot');
 
 
 exports.approvePendingAllocation = async (req, res) => {
   const { id } = req.params;
 
-  
   try {
     const pending = await AllocationRequest.findByPk(id);
     if (!pending || pending.status !== 'pending') {
       return res.status(404).json({ error: 'Request not found or already processed' });
     }
+
+    const matchingPlot = await plot.findByPk(pending.plotId);
+
+if (!matchingPlot) {
+  return res.status(404).json({ error: 'Plot not found for this request.' });
+}
+
+if (matchingPlot.status === 'Sold') {
+  return res.status(400).json({ error: 'Plot is already sold to another customer.' });
+}
+
+
       const maxBooking = await Allocation.max('bookingNumber');
       const nextNumber = maxBooking ? parseInt(maxBooking) + 1 : 1;
-      bookingNumber = nextNumber.toString().padStart(4, '0');
+      bookingNumber = nextNumber.toString().padStart(4, '0'); 
     // Exclude fields not needed or auto-generated
     const {
       id: _ignoreId,
@@ -37,6 +49,9 @@ exports.approvePendingAllocation = async (req, res) => {
     // Mark request as approved
     pending.status = 'approved';
     await pending.save();
+
+    //  Update plot status to 'Sold'
+    await matchingPlot.update({ status: 'Sold' });
 
     return res.status(200).json({ message: 'Request approved and plot allocated', allocation });
 

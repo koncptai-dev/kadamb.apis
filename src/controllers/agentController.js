@@ -90,7 +90,6 @@ exports.registerAgent = async (req, res) => {
     });
 
     
-
     await sendCredentialsEmail(email, associateCode, password);
 
     return res.status(201).json({ message: 'Agent registered successfully. Credentials sent to email.', agent: newAgent });

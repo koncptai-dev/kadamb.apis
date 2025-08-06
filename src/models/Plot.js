@@ -27,7 +27,6 @@ const Plot = sequelize.define("Plot", {
   plotNumber: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique:true,
    
   },
   position: {

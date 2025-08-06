@@ -63,6 +63,14 @@ const Agent = require("./Agent");  // Import the Agent model
       type: DataTypes.STRING,
       allowNull: false,
     },
+   plotId: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+  references: {
+    model: 'plots',
+    key: 'id',
+  },
+},
     plotSize: {
       type: DataTypes.STRING,
       allowNull: false,
