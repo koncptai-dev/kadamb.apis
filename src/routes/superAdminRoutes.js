@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const superAdminController = require("../controllers/superAdminController");
 const authenticateToken = require("../middlewares/auth");
+
 // Login Route
 router.post("/login", superAdminController.loginSuperAdmin);
 

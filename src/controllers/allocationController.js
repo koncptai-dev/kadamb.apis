@@ -3,12 +3,13 @@ const EMIPayment = require('../models/emipayment');
 const AllocationRequest=require('../models/AllocationRequest');
 const Agent = require('../models/Agent');
 const moment = require('moment'); // install if not already: npm install moment
+const plot = require('../models/Plot');
 const {Op}=require('sequelize');
 
 // AllocationRequest a plot to a customer
 exports.allocatePlot = async (req, res) => {
   try {
-    let { customerPAN, amount, downPayment, customerAadhar,emiDuration, emiStartDate } = req.body;
+    let { customerPAN, amount, downPayment, customerAadhar,emiDuration, emiStartDate, plotNumber, projectName,...otherFields} = req.body;
 
     if (!customerPAN || customerPAN.trim() === "") {
       return res.status(400).json({ error: "Customer PAN is required." });
@@ -41,14 +42,34 @@ exports.allocatePlot = async (req, res) => {
         : null;
     }
 
+ 
+ const matchedPlot = await plot.findOne({
+      where: { plotNumber, projectName }
+    });
+
+    if (!matchedPlot) {
+      return res.status(400).json({ error: 'Plot not found with given project and number' });
+    }
+
+    if (matchedPlot.status === 'Sold') {
+      return res.status(400).json({ error: 'This plot is already sold' });
+    }
+
+
     const allocation = await AllocationRequest.create({
-      ...req.body,
+      ...otherFields,
+      customerPAN,
+      customerAadhar,
+      amount,
+      downPayment,
+      emiDuration,
+      emiStartDate,
       emiMonthly,
       emiEndDate,
-      emiDuration,
-      downPayment,
-      emiStartDate,
-      status: "pending",
+      plotNumber,
+      projectName,
+      plotId: matchedPlot.id,  
+      status: 'pending',
     });
 
     return res.status(201).json({

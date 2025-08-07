@@ -3,6 +3,8 @@ const { Sequelize,UniqueConstraintError } = require("sequelize");
 const fs = require('fs');
 const path = require('path');
 const { log } = require("console");
+const { Op } = require("sequelize");
+
 
 // Add a new plot
 exports.addPlot = async (req, res) => {
@@ -41,6 +43,16 @@ exports.addPlot = async (req, res) => {
       
       const yard = area / 9;
      
+      const existingPlot = await Plot.findOne({
+        where: {
+          projectName,
+          plotNumber
+        }
+      });
+
+      if (existingPlot) {
+       return res.status(400).json({success: false,message: "Plot number already exists for this project",});
+      }
       
     const newPlot = await Plot.create({
       projectName,
@@ -60,14 +72,8 @@ exports.addPlot = async (req, res) => {
 
     res.status(201).json({ success: true, message: "Plot added successfully", plot: newPlot });
   }catch (error) {
-    if (error instanceof UniqueConstraintError) {
-      return res.status(400).json({
-        success: false,
-        message: "Plot number already exists for this project",
-      });
-    }
-    console.error("Error adding plot:", error);
-    return res.status(500).json({ success: false, message: "Error adding plot", error: error.message });
+  console.error("Error adding plot:", error);
+  return res.status(500).json({ success: false, message: "Error adding plot", error: error.message });
   }
 };
 
@@ -123,6 +129,20 @@ exports.updatePlot = async (req, res) => {
       if ( emiDuration != null &&  !isNaN(emiDuration) && emiDuration > 0 && price != null && downPayment != null && price > downPayment) {
       emiAmount = (price - downPayment) / emiDuration;
     }
+
+          const duplicatePlot = await Plot.findOne({
+        where: {
+          projectName,
+          plotNumber,
+          id: { [Sequelize.Op.ne]: id }
+        }
+      });
+      if (duplicatePlot) {
+        return res.status(400).json({
+          success: false,
+          message: "Plot number already exists for this project",
+        });
+      }
    
 
     // Perform update

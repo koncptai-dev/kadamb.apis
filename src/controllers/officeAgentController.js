@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const { Op } = require('sequelize');
 const OfficeAgent= require('../models/OfficeAgent');
 const { Agent } = require('../models');
-
+const { sendResetEmail, sendCredentialsEmail } = require('../utils/emailService'); // Utility for sending emails
 require('dotenv').config();
 
 // Generate sequanial Associate Code
@@ -89,6 +89,7 @@ exports.loginofficeAgent = async (req, res) => {
     if (!isMatch) {
       return res.status(401).json({ message: 'Invalid AssociateCode or Password' });
     }
+console.log(isMatch);
 
     const token = jwt.sign({ id: agent.id, associateCode: agent.associateCode }, process.env.JWT_SECRET, {
       expiresIn: '1d',
@@ -138,5 +139,75 @@ exports.getAgents = async (req, res) => {
     res.status(200).json({ message: "Agents retrieved successfully", agents });
   } catch (error) {
     res.status(500).json({ message: "Error fetching agents", error: error.message });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword, confirmPassword } = req.body;
+    const agentId = req.user.id; // Extract agent ID from JWT token
+
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({ message: "New password and confirm password must match" });
+    }
+
+    const agent = await OfficeAgent.findByPk(agentId);
+    if (!agent) {
+      return res.status(404).json({ message: "Agent not found" });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, agent.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await agent.update({ password: hashedPassword });
+
+    res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Error changing password", error: error.message });
+  }
+};
+
+// Forgot Password - Send Reset Code
+exports.sendResetCode = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const agent = await OfficeAgent.findOne({ where: { email } });
+    if (!agent) return res.status(404).json({ message: 'Email not found' });
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    agent.resetCode = resetCode;
+    await agent.save();
+
+    await sendResetEmail(email, resetCode); // Send reset email
+    res.status(200).json({ message: 'Reset code sent to email' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error sending reset code', error: error.message });
+  }
+};
+
+// Forgot Password - Reset Password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, resetCode, newPassword } = req.body;
+    const agent = await OfficeAgent.findOne({ where: { email, resetCode } });
+
+    if (!agent) return res.status(400).json({ message: 'Invalid reset code' });
+
+    agent.password = await bcrypt.hash(newPassword, 10);
+    console.log(agent.password);
+    
+    agent.resetCode = null;
+    await agent.save();
+
+    res.status(200).json({ message: 'Password reset successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error resetting password', error: error.message });
   }
 };
